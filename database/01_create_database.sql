@@ -1,0 +1,13 @@
+-- CT-RSS Management System (Lapu-Lapu City College — College of Technology)
+-- 01_create_database.sql
+-- Standalone database initialization reference for external PostgreSQL servers.
+-- Note: In managed PostgreSQL services (e.g., Cloud SQL, RDS), the target database
+-- is already created by the provider; execute 02_create_tables.sql through
+-- 05_seed_data.sql inside the target database.
+
+-- Example for self-hosted PostgreSQL superuser execution:
+-- CREATE DATABASE ct_rss_db
+--   WITH ENCODING = 'UTF8'
+--        LC_COLLATE = 'en_US.UTF-8'
+--        LC_CTYPE = 'en_US.UTF-8'
+--        TEMPLATE = template0;

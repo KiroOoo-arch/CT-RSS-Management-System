@@ -1,0 +1,2449 @@
+# MASTER PROJECT PROMPT
+# CT-RSS MANAGEMENT SYSTEM
+## Lapu-Lapu City College — College of Technology
+
+---
+
+# 1. YOUR ROLE AND PROJECT RESPONSIBILITY
+
+You are the lead software architect, database designer, backend developer, frontend developer, and technical assistant for the development of the **CT-RSS Management System**.
+
+Your responsibility is to help develop a complete, functional, secure, maintainable, and database-driven web application for managing the Requirement for Student Service (RSS) process of the College of Technology at Lapu-Lapu City College.
+
+You must follow this master specification throughout development.
+
+Do not treat this as a simple CRUD project. The system must implement the actual workflows, permissions, approval processes, service-hour verification, accomplishment reviews, document generation, historical records, and reporting requirements described here.
+
+## Mandatory development rules
+
+1. Treat this document as the master system specification.
+2. Treat the approved 28-table PostgreSQL design in Section 8 as the authoritative database reference.
+3. Never change the approved database structure without identifying the reason and requesting approval.
+4. Do not invent additional database tables, columns, statuses, roles, or relationships without first presenting the proposal.
+5. Do not silently remove required features to simplify implementation.
+6. Do not skip database validation and testing.
+7. Do not proceed to another milestone when the current milestone has unresolved critical issues.
+8. Preserve historical and official records.
+9. Implement actual working functionality, not just static screens or sample dashboards.
+10. Do not claim that a feature works unless it has actually been implemented and tested.
+11. Inspect the existing project before modifying files.
+12. Do not overwrite existing working code without understanding its purpose.
+13. Provide clear progress reports, changed-file lists, implementation details, and testing results.
+14. When a requirement is ambiguous, document the ambiguity and propose a solution rather than silently making a major design decision.
+
+---
+
+# 2. PROJECT OVERVIEW
+
+**System Name:** CT-RSS Management System
+
+**Institution:** Lapu-Lapu City College
+
+**Initial Implementation:** College of Technology
+
+**Future Expansion:** Other colleges within the institution
+
+**System Type:** Web-based management and monitoring system
+
+**Backend:** Laravel / PHP
+
+**Database:** PostgreSQL
+
+**Frontend:** A responsive web interface. The frontend framework has not yet been finalized. Inspect the existing project and recommend a suitable implementation before committing to a framework. Do not assume React, TypeScript, or another framework without approval.
+
+**Database Management Tool:** pgAdmin may be used optionally.
+
+**Development Environment:** Do not require XAMPP. Use a suitable PHP/Laravel and PostgreSQL development environment.
+
+## System purpose
+
+The CT-RSS Management System will digitalize and centralize the process of managing student service activities.
+
+The system will manage:
+
+- Student account registration and approval
+- Student profile and academic information
+- Colleges, programs, year levels, academic years, and sections
+- Service task creation and publication
+- Task visibility and student eligibility
+- Student task applications
+- Application approval and rejection
+- Task sessions and schedules
+- Attendance records
+- Verification of actual service hours
+- Service-hour adjustments
+- Student accomplishment submissions
+- Photo evidence uploads
+- Accomplishment review and revision
+- Individual RSS report generation
+- Section RSS report generation
+- Official report template management
+- Notifications
+- Audit logs and historical records
+
+The overall objective is to replace scattered manual processes with one centralized and controlled system.
+
+---
+
+# 3. SYSTEM USERS AND AUTHORIZATION
+
+The system has three initial roles.
+
+These are the only approved initial roles:
+
+1. RSS Coordinator
+2. Student
+3. Section Representative
+
+Do not automatically create another role, such as Super Admin, Administrator, Department Head, or Faculty, without approval.
+
+## 3.1 RSS Coordinator
+
+The RSS Coordinator is the primary operational authority of the RSS system.
+
+The Coordinator is responsible for managing the RSS process and approving important activities.
+
+### Coordinator permissions
+
+The Coordinator can:
+
+- Access the Coordinator dashboard.
+- Review student registrations.
+- Approve or reject student registrations.
+- View and manage student records.
+- Manage colleges, programs, year levels, academic years, and sections.
+- Manage task categories.
+- Create tasks.
+- Edit tasks.
+- Publish tasks.
+- Cancel and archive tasks.
+- Select target sections.
+- Select individual target students.
+- Manage task sessions.
+- View student applications.
+- Approve or reject applications.
+- Record application-review remarks.
+- Manage attendance records.
+- Verify attendance.
+- Reject invalid attendance.
+- Verify service hours.
+- Review hour-adjustment requests.
+- Approve or reject hour adjustments.
+- Review student accomplishment submissions.
+- Approve accomplishments.
+- Request accomplishment revisions.
+- Reject accomplishment submissions.
+- View submission history and evidence.
+- Upload and manage official RSS templates.
+- Generate individual RSS reports.
+- Generate section RSS reports.
+- View notifications.
+- Review relevant audit logs.
+- Manage authorized system records.
+
+The Coordinator is the primary authority for approving student registration, task applications, official attendance hours, accomplishment submissions, and official reports.
+
+### Coordinator authorization restrictions
+
+- Only an authorized Coordinator can perform Coordinator functions.
+- Students cannot perform Coordinator operations.
+- Section Representatives cannot automatically access Coordinator functions.
+- Coordinator decisions must be recorded.
+- Sensitive actions must be auditable.
+
+## 3.2 Student
+
+Students use the system to participate in RSS activities and monitor their service progress.
+
+### Student permissions
+
+Students can:
+
+- Register an account.
+- Verify their email if email verification is enabled.
+- View account approval status.
+- Log in after account activation.
+- View their own profile.
+- View their academic information.
+- View available tasks for which they are eligible.
+- View task descriptions and schedules.
+- Apply for tasks.
+- Monitor application status.
+- Withdraw applications where permitted.
+- View approved activities.
+- View their attendance records.
+- View verified service hours.
+- View service-hour adjustment results.
+- Create accomplishment submissions.
+- Upload supporting photographs.
+- Add evidence captions.
+- Submit accomplishments for review.
+- View Coordinator remarks.
+- Resubmit revised accomplishments.
+- View previous submission versions.
+- View accomplishment approval status.
+- View their RSS progress.
+- View or download authorized individual reports.
+- Receive notifications.
+
+### Student restrictions
+
+Students cannot:
+
+- Approve their own registration.
+- Approve their own applications.
+- Verify their own attendance.
+- Credit their own service hours.
+- Approve their own accomplishments.
+- Modify Coordinator decisions.
+- View private records belonging to other students.
+- Access restricted administrative features.
+- Generate official reports unless the Coordinator-authorized workflow permits it.
+
+Students must only access records they are authorized to view.
+
+## 3.3 Section Representative
+
+Section Representatives assist with section-level coordination.
+
+Potential functions include:
+
+- View authorized section information.
+- View announcements and task information.
+- Assist with communication.
+- View limited section participation summaries.
+- Monitor authorized section-related information.
+
+The exact access permissions of Section Representatives must be restricted.
+
+They must not automatically have access to:
+
+- Private student contact information.
+- Student passwords or credentials.
+- Coordinator-only functions.
+- Official attendance verification.
+- Service-hour approval.
+- Accomplishment approval.
+- Restricted evidence files.
+- Unrelated student records.
+
+Do not assume that a Section Representative has authority to approve or reject applications, attendance, or accomplishments.
+
+These permissions require explicit approval before implementation.
+
+## 3.4 Role assignment and initial authorization
+
+The system must use role-based access control.
+
+The initial RSS Coordinator account must be provisioned through a controlled and documented setup process.
+
+Do not assume that anybody who registers automatically becomes a Coordinator.
+
+The approved schema has no separate Super Admin role. Do not add one without approval.
+
+Role assignment must be restricted to an authorized provisioning process or authorized existing Coordinator.
+
+Every role assignment should record the assigning user where applicable.
+
+## 3.5 Permission matrix
+
+| Function | Coordinator | Student | Section Representative |
+|---|---|---|---|
+| Dashboard | Full | Personal | Limited |
+| Student registration review | Yes | No | No |
+| Student profile | Authorized records | Own profile | Limited section information |
+| College/program/section management | Yes | No | No |
+| Task creation | Yes | No | No |
+| Task publication | Yes | No | No |
+| Task viewing | All authorized | Eligible tasks | Authorized |
+| Task application | No | Yes | If also a student |
+| Application approval | Yes | No | No |
+| Attendance management | Yes | Own attendance view | Limited only if approved |
+| Attendance verification | Yes | No | No |
+| Hour adjustment approval | Yes | No | No |
+| Accomplishment submission | Review | Yes | No |
+| Accomplishment approval | Yes | No | No |
+| Official reports | Generate/manage | Authorized personal reports | Limited if approved |
+| Report templates | Yes | No | No |
+| Notifications | Manage/view | Own | Own |
+| Audit logs | Authorized | No | No |
+
+---
+
+# 4. ACCOUNT REGISTRATION AND AUTHENTICATION
+
+Create a secure authentication and registration process.
+
+## Student registration
+
+Students must provide the required account and student information.
+
+The information may include:
+
+- Full name
+- Student number
+- Email address
+- Password
+- College
+- Program
+- Year level
+- Section
+- Contact number
+- Other approved profile information
+
+The student submits the registration.
+
+The account initially has a pending status.
+
+The Coordinator reviews the submitted student information.
+
+The Coordinator can approve or reject the registration.
+
+Only approved and active accounts can use the full student portal.
+
+## Account statuses
+
+Use the approved account status values:
+
+- pending
+- active
+- suspended
+- deactivated
+
+Student registration status is separate and uses:
+
+- pending
+- approved
+- rejected
+
+Do not confuse registration approval with general account status.
+
+## Authentication requirements
+
+Implement:
+
+- Secure login
+- Logout
+- Registration
+- Password hashing
+- Password reset
+- Account status validation
+- Role-based access control
+- Session security
+- Email verification if configured
+- Protected routes
+- Authorization policies
+- Form validation
+- Login rate limiting
+
+Never store plaintext passwords.
+
+Never expose password hashes or private account fields to the frontend.
+
+---
+
+# 5. SYSTEM MODULES
+
+The system must be organized into functional modules.
+
+## Module 1: Authentication and Authorization
+
+- Login
+- Registration
+- Logout
+- Password reset
+- Email verification if enabled
+- Role management
+- Account status management
+- Access control
+- Authorization policies
+
+## Module 2: Student Management
+
+The Coordinator must be able to:
+
+- View students.
+- Search students.
+- Filter by college.
+- Filter by program.
+- Filter by year level.
+- Filter by section.
+- Filter by registration status.
+- Approve or reject registrations.
+- View student details.
+- Update authorized student information.
+- View student activity history.
+- View student service-hour totals.
+- View student accomplishment status.
+
+Maintain student section history. Do not overwrite historical academic assignments when students move to another section.
+
+## Module 3: Academic Structure Management
+
+Manage:
+
+- Colleges
+- Programs
+- Year levels
+- Academic years
+- Sections
+- Student section history
+
+The initial configured data should cover the College of Technology.
+
+The design must also allow other colleges to be added in the future.
+
+## Module 4: Task Management
+
+The Coordinator can:
+
+- Create tasks.
+- Edit tasks.
+- View tasks.
+- Publish tasks.
+- Cancel tasks.
+- Complete tasks.
+- Archive tasks.
+- Assign categories.
+- Set visibility.
+- Set student capacity.
+- Set required hours.
+- Define application dates.
+- Define activity dates.
+- Set locations.
+- Create multiple task sessions.
+- Assign target sections.
+- Assign selected students.
+
+### Task fields
+
+Tasks should support:
+
+- College
+- Category
+- Creator
+- Title
+- Description
+- Location
+- Visibility
+- Capacity
+- Required hours
+- Application start
+- Application deadline
+- Activity start
+- Activity end
+- Status
+
+### Task visibility
+
+Three visibility options:
+
+1. all_students
+2. specific_sections
+3. selected_students
+
+For specific_sections, use the task_target_sections table.
+
+For selected_students, use the task_target_students table.
+
+The application must enforce visibility and eligibility through backend authorization logic, not just frontend filtering.
+
+### Task statuses
+
+Use:
+
+- draft
+- published
+- ongoing
+- completed
+- cancelled
+- archived
+
+### Task validation
+
+- Capacity must be greater than zero when provided.
+- Required hours must be nonnegative when provided.
+- Application deadline must be after application start when both exist.
+- Activity end must be after activity start when both exist.
+- A published task must meet required publication validation.
+- Prevent unauthorized task editing.
+- Capacity must be protected against simultaneous application requests.
+
+## Module 5: Task Sessions
+
+A task can have multiple sessions.
+
+Each session should support:
+
+- Session title
+- Session date
+- Start time
+- End time
+- Location
+
+Validate that the end time is later than the start time.
+
+Attendance records must reference valid task sessions.
+
+## Module 6: Task Application Management
+
+Students can apply for eligible tasks.
+
+The Coordinator reviews the submitted applications.
+
+Application statuses:
+
+- pending
+- approved
+- rejected
+- withdrawn
+- cancelled
+
+Rules:
+
+- A student cannot submit duplicate applications for the same task.
+- Application capacity must be respected.
+- Students must be eligible for the task.
+- Pending or rejected applications do not count as approved participants.
+- Withdrawn applications must remain historically recorded.
+- Coordinator decisions must be stored.
+- Review remarks should be recorded where provided.
+- Capacity handling must use safe database transactions and appropriate row locking.
+
+## Module 7: Attendance and Service Hour Management
+
+This is a critical module.
+
+Attendance must be connected to the approved task application and valid task session.
+
+Attendance includes:
+
+- Attendance date
+- Check-in time
+- Check-out time
+- Recorded hours
+- Verified hours
+- Verification status
+- Verifying Coordinator
+- Verification timestamp
+- Remarks
+
+Attendance verification statuses:
+
+- pending
+- verified
+- rejected
+
+Rules:
+
+- Check-out must be later than check-in when both exist.
+- Recorded hours must not be negative.
+- Verified hours must not be negative.
+- Attendance must reference a valid application and task session.
+- A student must not be able to verify their own attendance.
+- Only authorized Coordinator actions can verify attendance.
+- Attendance should not be silently overwritten.
+
+## Service hour formula
+
+The official credited service-hour calculation is:
+
+Total Credited RSS Hours =
+SUM(verified attendance hours)
++
+SUM(approved adjustment hours)
+
+Only verified attendance hours count.
+
+Only approved adjustment hours count.
+
+Pending and rejected attendance must not contribute.
+
+Pending and rejected adjustments must not contribute.
+
+The dashboard must distinguish recorded, pending, rejected, and verified hours.
+
+## Module 8: Service Hour Adjustments
+
+Allow documented hour corrections.
+
+An adjustment should contain:
+
+- Application
+- Requesting user
+- Approving user where applicable
+- Adjustment hours
+- Reason
+- Status
+- Approval timestamp
+
+Adjustment hours may be positive or negative.
+
+The approved design does not yet specify the complete allowed status vocabulary. Do not silently invent a final status constraint. Present the proposed values for review before enforcing them.
+
+Only approved adjustments count in the official calculation.
+
+Keep the adjustment history.
+
+## Module 9: Accomplishment Management
+
+After service participation, students document their accomplishments.
+
+The student creates an accomplishment and submits a version for Coordinator review.
+
+Accomplishment statuses:
+
+- draft
+- submitted
+- revision_required
+- approved
+- rejected
+
+The Coordinator can:
+
+- View submissions.
+- Read descriptions.
+- View activity dates.
+- View student remarks.
+- View evidence images.
+- Approve.
+- Request revision.
+- Reject.
+- Add review remarks.
+- View previous versions.
+
+An accomplishment belongs to one task application.
+
+The application-to-accomplishment relationship is one-to-zero-or-one.
+
+## Module 10: Accomplishment Submission Versioning
+
+Every submitted version must be preserved.
+
+A student may submit a new version after a revision request.
+
+The system must not overwrite the previous submitted version.
+
+Maintain:
+
+- Accomplishment
+- Submitted by
+- Version number
+- Activity date
+- Description
+- Student remarks
+- Submission timestamp
+- Review history
+- Evidence associated with the specific submission version
+
+Use a unique version number per accomplishment.
+
+Do not invent additional submission statuses. The exact approved status values for accomplishment_submissions still need confirmation.
+
+## Module 11: Evidence Image Management
+
+Students can upload multiple photographs for a submission.
+
+Image categories:
+
+- before
+- during
+- after
+- other
+
+Each evidence record should store:
+
+- Original filename
+- Protected storage path
+- MIME type
+- File size
+- Image category
+- Caption
+- Display order
+- Uploader
+- Associated submission
+
+Requirements:
+
+- Validate file type.
+- Validate size.
+- Use protected storage.
+- Do not trust client-provided filenames.
+- Prevent executable files from being uploaded as images.
+- Store files outside public unrestricted access.
+- Provide authorized viewing.
+- Preserve evidence tied to historical submissions.
+- Allow an appropriate gallery interface.
+- Preserve category and display order.
+
+Store the file itself in protected storage. PostgreSQL stores file metadata and the storage path.
+
+## Module 12: RSS Report Generation
+
+This module generates the official RSS documents.
+
+It must support:
+
+1. Individual RSS reports
+2. Section RSS reports
+
+### Individual report
+
+The Coordinator selects the exact approved accomplishment submission.
+
+The report must link to that exact approved submission.
+
+Do not simply use the latest version.
+
+### Section report
+
+The Coordinator selects the appropriate section and academic year.
+
+The system gathers eligible approved submissions through report_items.
+
+The section report must preserve which submissions were included.
+
+### Report statuses
+
+Use:
+
+- generated
+- approved
+- archived
+
+### Report template management
+
+The Coordinator can:
+
+- Upload official templates.
+- Name templates.
+- Version templates.
+- Assign templates to colleges.
+- Activate or deactivate templates.
+- View template versions.
+
+Templates must be college-specific.
+
+The official Lapu-Lapu City College RSS template will be provided separately. Do not invent its actual layout.
+
+Until the official template is supplied, implement the report-generation architecture without claiming that the generated PDF matches the official document.
+
+### PDF requirements
+
+- Match the official template when provided.
+- Use the exact approved accomplishment information.
+- Include the correct student/section information.
+- Generate individual reports.
+- Generate consolidated section reports.
+- Save generated PDFs to protected storage.
+- Store the report metadata.
+- Preserve historical report versions.
+- Make authorized downloads possible.
+
+## Module 13: Notification Management
+
+Provide in-system notifications.
+
+### Student notifications
+
+- Registration approved.
+- Registration rejected.
+- New eligible task published.
+- Application approved.
+- Application rejected.
+- Application status changed.
+- Task cancelled.
+- Upcoming activity.
+- Attendance verified.
+- Attendance rejected.
+- Adjustment approved.
+- Adjustment rejected.
+- Accomplishment submitted.
+- Revision required.
+- Accomplishment approved.
+- Accomplishment rejected.
+
+### Coordinator notifications
+
+- New student registration.
+- New task application.
+- Attendance awaiting verification.
+- Hour adjustment request.
+- New accomplishment submission.
+- Revised accomplishment submission.
+
+Notifications must be linked to the appropriate user and related record when applicable.
+
+Email notifications can be considered as an additional feature later.
+
+## Module 14: Audit Logs
+
+Sensitive actions must be traceable.
+
+Audit records may include:
+
+- User
+- Action
+- Subject type
+- Subject ID
+- Old values
+- New values
+- IP address
+- User agent
+- Timestamp
+
+Record sensitive operations such as:
+
+- Role assignment.
+- Registration approval.
+- Task publication.
+- Application decisions.
+- Attendance verification.
+- Hour adjustments.
+- Accomplishment reviews.
+- Report generation.
+- Account suspension.
+- Other significant administrative changes.
+
+Audit logs must not be casually deleted through normal application operations.
+
+---
+
+# 6. DASHBOARDS
+
+## Coordinator Dashboard
+
+Display useful system-wide information, including:
+
+- Total students
+- Pending registrations
+- Active tasks
+- Pending applications
+- Approved applicants
+- Upcoming sessions
+- Attendance awaiting verification
+- Pending hour adjustments
+- Accomplishments awaiting review
+- Revision requests
+- Reports generated
+- Service-hour statistics
+
+Statistics must come from actual database records.
+
+Do not use hardcoded sample counts in production dashboards.
+
+## Student Dashboard
+
+Display personal information:
+
+- Student profile
+- Registration/account status
+- Available eligible tasks
+- My applications
+- Application statuses
+- Upcoming activities
+- Attendance records
+- Verified service hours
+- Pending attendance
+- Accomplishment status
+- Revision requests
+- Submission history
+- Notifications
+- Authorized reports
+
+Students should see only their own restricted personal information.
+
+## Section Representative Dashboard
+
+Provide a limited section view according to approved permissions:
+
+- Section information
+- Announcements
+- Relevant tasks
+- Authorized section summaries
+- Participation overview where approved
+
+Do not expose confidential personal records.
+
+---
+
+# 7. COMPLETE BUSINESS WORKFLOWS
+
+Implement these workflows in the backend and frontend.
+
+## Workflow A: Student registration
+
+1. Student opens registration page.
+2. Student submits information.
+3. System validates data.
+4. Account is created with pending account status.
+5. Student registration is marked pending.
+6. Coordinator receives a notification.
+7. Coordinator reviews the registration.
+8. Coordinator approves or rejects.
+9. System records the decision and review information.
+10. Approved account is activated according to the authorization rules.
+11. Student is notified.
+12. Rejected registration remains properly recorded.
+
+Do not let a student approve their own registration.
+
+## Workflow B: Task creation and publication
+
+1. Coordinator opens task management.
+2. Coordinator creates a task.
+3. Coordinator selects category.
+4. Coordinator chooses target college.
+5. Coordinator sets visibility.
+6. Coordinator sets capacity if applicable.
+7. Coordinator defines application dates.
+8. Coordinator defines activity dates.
+9. Coordinator creates one or more sessions.
+10. Coordinator assigns target sections or students when needed.
+11. Coordinator saves as draft.
+12. Coordinator publishes when ready.
+13. System makes the task visible only to eligible users.
+14. Eligible students receive notifications.
+
+## Workflow C: Student application
+
+1. Student opens available tasks.
+2. System filters tasks based on eligibility.
+3. Student opens task details.
+4. Student submits application.
+5. System validates application eligibility.
+6. System prevents duplicate applications.
+7. System checks capacity.
+8. System creates pending application.
+9. Coordinator receives notification.
+10. Coordinator reviews the application.
+11. Coordinator approves or rejects it.
+12. System records the decision and remarks.
+13. Student receives notification.
+14. Approved student can access relevant activity information.
+
+## Workflow D: Service attendance
+
+1. Student has an approved application.
+2. Student attends the activity.
+3. Attendance is recorded against the task session.
+4. System stores check-in/check-out or other authorized attendance information.
+5. System calculates recorded hours when possible.
+6. Attendance is marked pending verification.
+7. Coordinator reviews attendance.
+8. Coordinator verifies or rejects it.
+9. System stores the decision, verified hours, and verifier.
+10. Only verified hours become credited hours.
+
+## Workflow E: Service-hour adjustment
+
+1. Authorized user requests an adjustment.
+2. Reason is recorded.
+3. Adjustment hours are recorded.
+4. Coordinator reviews.
+5. Coordinator approves or rejects.
+6. Decision is recorded.
+7. Only approved adjustments count.
+8. Student can view the result.
+
+## Workflow F: Accomplishment submission
+
+1. Student opens their completed service activity.
+2. Student creates an accomplishment draft.
+3. Student records activity date.
+4. Student writes accomplishment description.
+5. Student optionally adds remarks.
+6. Student uploads evidence photographs.
+7. Student categorizes photographs.
+8. Student submits the accomplishment.
+9. System creates the appropriate submission version.
+10. Coordinator receives notification.
+11. Coordinator reviews the submission.
+12. Coordinator approves, requests revision, or rejects.
+13. System records the review.
+
+## Workflow G: Accomplishment revision
+
+1. Coordinator requests revision.
+2. Coordinator provides remarks.
+3. Student receives notification.
+4. Student opens the submission history.
+5. Student reviews remarks.
+6. Student creates a revised version.
+7. System preserves the previous version.
+8. Student submits the revision.
+9. Coordinator reviews the new version.
+10. System stores the decision and review history.
+
+Never overwrite a historical submission.
+
+## Workflow H: Individual RSS report
+
+1. Coordinator opens the report module.
+2. Coordinator selects student and approved accomplishment submission.
+3. Coordinator selects the appropriate college template.
+4. System checks the submission's approval status.
+5. System creates the individual PDF.
+6. System stores report metadata and file path.
+7. System records the exact source submission.
+8. Coordinator can review/download the report.
+9. Authorized users can access the report according to permissions.
+
+## Workflow I: Section RSS report
+
+1. Coordinator opens the report module.
+2. Coordinator selects a section.
+3. Coordinator selects academic year.
+4. Coordinator selects the appropriate report template.
+5. System gathers eligible approved submissions.
+6. System generates the consolidated PDF.
+7. System creates report_items records.
+8. System stores report metadata and file path.
+9. Coordinator can review/download the report.
+10. The report preserves which submissions were included.
+
+---
+
+# 8. APPROVED POSTGRESQL DATABASE DESIGN — EXACTLY 28 TABLES
+
+This is the authoritative database design.
+
+The database must use PostgreSQL.
+
+Do not redesign these tables just because another structure seems easier.
+
+Do not rename approved tables.
+
+Do not add or remove tables without approval.
+
+Use BIGINT primary keys unless explicitly specified otherwise.
+
+Use TIMESTAMPTZ for timestamp fields where specified.
+
+Use PostgreSQL foreign keys, unique constraints, check constraints, and partial indexes where defined.
+
+## TABLE 1: users
+
+Purpose: Stores user account information.
+
+Columns:
+
+- id BIGINT PRIMARY KEY
+- name VARCHAR(150)
+- email VARCHAR(255) UNIQUE
+- password VARCHAR(255), securely hashed
+- account_status with allowed values pending, active, suspended, deactivated
+- email_verified_at TIMESTAMPTZ NULL
+- remember_token
+- created_at
+- updated_at
+- deleted_at TIMESTAMPTZ NULL
+
+The password must never be returned through normal user-facing API responses.
+
+## TABLE 2: roles
+
+Purpose: Stores the system roles.
+
+Columns:
+
+- id BIGINT PRIMARY KEY
+- name VARCHAR(50) UNIQUE
+- description TEXT
+- created_at
+- updated_at
+
+Initial roles:
+
+- RSS Coordinator
+- Student
+- Section Representative
+
+## TABLE 3: user_roles
+
+Purpose: Assigns roles to users.
+
+Columns:
+
+- id BIGINT PRIMARY KEY
+- user_id FK to users
+- role_id FK to roles
+- assigned_by FK to users, nullable
+- assigned_at TIMESTAMPTZ
+
+Constraint:
+
+- UNIQUE(user_id, role_id)
+
+## TABLE 4: colleges
+
+Purpose: Stores college information.
+
+Columns:
+
+- id BIGINT PRIMARY KEY
+- name VARCHAR(150)
+- code VARCHAR(30) UNIQUE
+- description
+- is_active BOOLEAN
+- created_at
+- updated_at
+
+Initial use: College of Technology.
+
+Future expansion: Additional colleges.
+
+## TABLE 5: programs
+
+Purpose: Stores academic programs belonging to a college.
+
+Columns:
+
+- id BIGINT PRIMARY KEY
+- college_id FK to colleges
+- name VARCHAR(150)
+- code VARCHAR(30)
+- is_active BOOLEAN
+- created_at
+- updated_at
+
+Constraint:
+
+- UNIQUE(college_id, code)
+
+## TABLE 6: year_levels
+
+Purpose: Stores academic year-level definitions.
+
+Columns:
+
+- id BIGINT PRIMARY KEY
+- name VARCHAR(50) UNIQUE
+- sort_order SMALLINT UNIQUE
+
+Use sort_order to control display order.
+
+Do not replace it with an unrelated field.
+
+## TABLE 7: academic_years
+
+Purpose: Stores academic-year information.
+
+Columns:
+
+- id BIGINT PRIMARY KEY
+- name VARCHAR(20) UNIQUE
+- start_date DATE
+- end_date DATE
+- is_current BOOLEAN
+- created_at
+- updated_at
+
+Constraints:
+
+- end_date must be later than start_date.
+- Only one academic year may be current.
+
+Use a PostgreSQL partial unique index for is_current = TRUE.
+
+## TABLE 8: sections
+
+Purpose: Stores sections belonging to programs and year levels.
+
+Columns:
+
+- id BIGINT PRIMARY KEY
+- program_id FK to programs
+- year_level_id FK to year_levels
+- name VARCHAR(50)
+- is_active BOOLEAN
+- created_at
+- updated_at
+
+Constraint:
+
+- UNIQUE(program_id, year_level_id, name)
+
+## TABLE 9: students
+
+Purpose: Stores student profile information.
+
+Columns:
+
+- id BIGINT PRIMARY KEY
+- user_id FK to users, UNIQUE
+- student_number VARCHAR(50) UNIQUE
+- first_name VARCHAR(150)
+- middle_name nullable
+- last_name VARCHAR(150)
+- suffix nullable
+- sex nullable; confirm its intended data type before implementing
+- birth_date nullable
+- contact_number VARCHAR(50) nullable
+- registration_status with values pending, approved, rejected
+- reviewed_by FK to users, nullable
+- reviewed_at nullable
+- created_at
+- updated_at
+
+Each student record belongs to one user account.
+
+## TABLE 10: student_section_history
+
+Purpose: Preserves section membership history across academic years.
+
+Columns:
+
+- id BIGINT PRIMARY KEY
+- student_id FK to students
+- section_id FK to sections
+- academic_year_id FK to academic_years
+- enrolled_at DATE
+- ended_at DATE nullable
+- is_current BOOLEAN
+- created_at
+- updated_at
+
+Constraint:
+
+- Partial unique index on student_id where is_current = TRUE.
+
+A student must not have more than one current section record.
+
+Historical section assignments must be preserved.
+
+## TABLE 11: task_categories
+
+Purpose: Classifies RSS service activities.
+
+Columns:
+
+- id BIGINT PRIMARY KEY
+- name VARCHAR(100) UNIQUE
+- description
+- is_active BOOLEAN
+- created_at
+- updated_at
+
+Do not invent final approved category seed data without approval.
+
+## TABLE 12: tasks
+
+Purpose: Main task/service activity records.
+
+Columns:
+
+- id BIGINT PRIMARY KEY
+- college_id FK to colleges
+- category_id FK to task_categories
+- created_by FK to users
+- title VARCHAR(200)
+- description TEXT
+- location VARCHAR(255) nullable
+- visibility with values all_students, specific_sections, selected_students
+- capacity INTEGER nullable
+- required_hours NUMERIC(6,2) nullable
+- application_start TIMESTAMPTZ nullable
+- application_deadline TIMESTAMPTZ nullable
+- activity_start TIMESTAMPTZ nullable
+- activity_end TIMESTAMPTZ nullable
+- status with values draft, published, ongoing, completed, cancelled, archived
+- created_at
+- updated_at
+- deleted_at TIMESTAMPTZ nullable
+
+Constraints:
+
+- capacity must be greater than zero when not null.
+- required_hours must be nonnegative when not null.
+- application_deadline must be after application_start when both exist.
+- activity_end must be after activity_start when both exist.
+
+## TABLE 13: task_target_sections
+
+Purpose: Connects tasks to selected target sections.
+
+Columns:
+
+- id BIGINT PRIMARY KEY
+- task_id FK to tasks
+- section_id FK to sections
+- created_at
+
+Constraint:
+
+- UNIQUE(task_id, section_id)
+
+## TABLE 14: task_target_students
+
+Purpose: Connects tasks to specifically selected students.
+
+Columns:
+
+- id BIGINT PRIMARY KEY
+- task_id FK to tasks
+- student_id FK to students
+- created_at
+
+Constraint:
+
+- UNIQUE(task_id, student_id)
+
+## TABLE 15: task_sessions
+
+Purpose: Stores individual sessions of a task.
+
+Columns:
+
+- id BIGINT PRIMARY KEY
+- task_id FK to tasks
+- session_title VARCHAR(150)
+- session_date DATE
+- start_time TIME
+- end_time TIME
+- location VARCHAR(255)
+- created_at
+- updated_at
+
+Validate that the session end time is later than the start time.
+
+## TABLE 16: task_applications
+
+Purpose: Stores student applications to tasks.
+
+Columns:
+
+- id BIGINT PRIMARY KEY
+- task_id FK to tasks
+- student_id FK to students
+- application_message nullable
+- status with values pending, approved, rejected, withdrawn, cancelled
+- applied_at
+- decided_at nullable
+- created_at
+- updated_at
+
+Constraint:
+
+- UNIQUE(task_id, student_id)
+
+## TABLE 17: application_reviews
+
+Purpose: Preserves Coordinator application decisions.
+
+Columns:
+
+- id BIGINT PRIMARY KEY
+- application_id FK to task_applications
+- reviewed_by FK to users
+- decision with values approved, rejected
+- remarks nullable
+- reviewed_at
+- created_at
+
+Preserve review history.
+
+## TABLE 18: accomplishments
+
+Purpose: Stores the main accomplishment record for a task application.
+
+Columns:
+
+- id BIGINT PRIMARY KEY
+- application_id FK to task_applications, UNIQUE
+- status with values draft, submitted, revision_required, approved, rejected
+- reviewed_by FK to users, nullable
+- reviewed_at nullable
+- coordinator_remarks nullable
+- created_at
+- updated_at
+
+Each application can have no more than one accomplishment record.
+
+## TABLE 19: accomplishment_submissions
+
+Purpose: Stores actual accomplishment content and each submission version.
+
+Columns:
+
+- id BIGINT PRIMARY KEY
+- accomplishment_id FK to accomplishments
+- submitted_by FK to users
+- version_number INTEGER
+- activity_date DATE
+- accomplishment_description TEXT
+- student_remarks nullable
+- status; the complete approved list of values has not yet been finalized
+- submitted_at TIMESTAMPTZ nullable
+- created_at
+
+Constraint:
+
+- UNIQUE(accomplishment_id, version_number)
+
+Never overwrite old versions.
+
+Do not invent final status values without approval.
+
+## TABLE 20: accomplishment_reviews
+
+Purpose: Stores Coordinator reviews of individual submission versions.
+
+Columns:
+
+- id BIGINT PRIMARY KEY
+- submission_id FK to accomplishment_submissions
+- reviewed_by FK to users
+- decision with values approved, revision_required, rejected
+- remarks nullable
+- reviewed_at
+- created_at
+
+Keep the review history.
+
+## TABLE 21: evidence_images
+
+Purpose: Stores supporting image metadata for accomplishment submissions.
+
+Columns:
+
+- id BIGINT PRIMARY KEY
+- submission_id FK to accomplishment_submissions
+- uploaded_by FK to users
+- original_filename VARCHAR(255)
+- storage_path VARCHAR(500)
+- mime_type VARCHAR(100)
+- file_size BIGINT
+- image_category with values before, during, after, other
+- caption nullable
+- display_order SMALLINT DEFAULT 1
+- created_at
+
+Constraint:
+
+- file_size must be greater than zero.
+
+The actual image must be stored in protected file storage.
+
+PostgreSQL must store the image metadata and storage path.
+
+## TABLE 22: attendance
+
+Purpose: Stores attendance and verified service hours.
+
+Columns:
+
+- id BIGINT PRIMARY KEY
+- application_id FK to task_applications
+- task_session_id FK to task_sessions
+- attendance_date DATE
+- check_in TIMESTAMPTZ nullable
+- check_out TIMESTAMPTZ nullable
+- recorded_hours NUMERIC(6,2)
+- verified_hours NUMERIC(6,2)
+- verification_status with values pending, verified, rejected
+- verified_by FK to users, nullable
+- verified_at nullable
+- remarks nullable
+- created_at
+- updated_at
+
+Constraint:
+
+- UNIQUE(application_id, task_session_id)
+- check_out must be after check_in when both exist.
+- recorded_hours must be nonnegative.
+- verified_hours must be nonnegative.
+
+## TABLE 23: service_hour_adjustments
+
+Purpose: Stores documented corrections to service hours.
+
+Columns:
+
+- id BIGINT PRIMARY KEY
+- application_id FK to task_applications
+- requested_by FK to users
+- approved_by FK to users, nullable
+- adjustment_hours NUMERIC(6,2)
+- reason TEXT
+- status; exact allowed status values must be finalized before enforcing a check constraint
+- approved_at nullable
+- created_at
+- updated_at
+
+Adjustment hours can be positive or negative.
+
+Only approved adjustments count toward credited hours.
+
+Do not impose an arbitrary nonzero adjustment constraint unless approved.
+
+## TABLE 24: report_templates
+
+Purpose: Stores college-specific official report templates.
+
+Columns:
+
+- id BIGINT PRIMARY KEY
+- college_id FK to colleges
+- template_name VARCHAR(150)
+- template_version VARCHAR(30)
+- storage_path VARCHAR(500)
+- is_active BOOLEAN
+- uploaded_by FK to users
+- created_at
+- updated_at
+
+Templates must be versioned.
+
+## TABLE 25: rss_reports
+
+Purpose: Stores generated official RSS reports.
+
+Columns:
+
+- id BIGINT PRIMARY KEY
+- college_id FK to colleges
+- template_id FK to report_templates
+- report_type with values individual, section
+- accomplishment_submission_id FK to accomplishment_submissions, nullable
+- section_id FK to sections, nullable
+- academic_year_id FK to academic_years, nullable
+- version INTEGER
+- file_path VARCHAR(500)
+- file_hash VARCHAR(128) nullable
+- status with values generated, approved, archived
+- generated_by FK to users
+- generated_at
+- created_at
+
+An individual report must link to the exact approved accomplishment submission.
+
+A section report must link to its included submissions through report_items.
+
+## TABLE 26: report_items
+
+Purpose: Records which submissions are included in a section report.
+
+Columns:
+
+- id BIGINT PRIMARY KEY
+- report_id FK to rss_reports
+- submission_id FK to accomplishment_submissions
+- created_at
+
+Constraint:
+
+- UNIQUE(report_id, submission_id)
+
+## TABLE 27: notifications
+
+Purpose: Stores in-system user notifications.
+
+Columns:
+
+- id UUID PRIMARY KEY
+- user_id FK to users
+- title VARCHAR(200)
+- message TEXT
+- notification_type VARCHAR(50)
+- related_type VARCHAR(100) nullable
+- related_id BIGINT nullable
+- read_at TIMESTAMPTZ nullable
+- created_at
+
+## TABLE 28: audit_logs
+
+Purpose: Stores important system activity and audit information.
+
+Columns:
+
+- id BIGINT PRIMARY KEY
+- user_id FK to users, nullable
+- action VARCHAR(100)
+- subject_type VARCHAR(150) nullable
+- subject_id BIGINT nullable
+- old_values JSONB nullable
+- new_values JSONB nullable
+- ip_address INET nullable
+- user_agent TEXT nullable
+- created_at
+
+---
+
+# 9. DATABASE RELATIONSHIPS
+
+Implement the following relationships accurately.
+
+## Accounts
+
+- users 1:M user_roles
+- roles 1:M user_roles
+- users 1:0..1 students
+- users may assign user_roles through assigned_by.
+
+## Academic structure
+
+- colleges 1:M programs
+- programs 1:M sections
+- year_levels 1:M sections
+- students 1:M student_section_history
+- sections 1:M student_section_history
+- academic_years 1:M student_section_history
+
+## Tasks and applications
+
+- colleges 1:M tasks
+- task_categories 1:M tasks
+- users 1:M created tasks
+- tasks M:N sections through task_target_sections
+- tasks M:N students through task_target_students
+- tasks 1:M task_sessions
+- tasks 1:M task_applications
+- students 1:M task_applications
+- task_applications 1:M application_reviews
+
+## Accomplishments
+
+- task_applications 1:0..1 accomplishments
+- accomplishments 1:M accomplishment_submissions
+- accomplishment_submissions 1:M accomplishment_reviews
+- accomplishment_submissions 1:M evidence_images
+
+## Attendance
+
+- task_applications 1:M attendance
+- task_sessions 1:M attendance
+- users 1:M attendance verification records through verified_by
+
+## Service-hour adjustments
+
+- task_applications 1:M service_hour_adjustments
+- users are recorded as requesting and approving users.
+
+## Reports
+
+- colleges 1:M report_templates
+- colleges 1:M rss_reports
+- report_templates 1:M rss_reports
+- rss_reports 1:M report_items
+- accomplishment_submissions 1:M report_items
+
+## System records
+
+- users 1:M notifications
+- users 1:M audit_logs
+
+---
+
+# 10. DATABASE INTEGRITY AND DELETION RULES
+
+Preserve historical and official data.
+
+Use RESTRICT or SET NULL where appropriate for historical records.
+
+Junction tables may use CASCADE only when safe and justified.
+
+Do not cascade-delete historical:
+
+- Application reviews
+- Accomplishment submissions
+- Accomplishment reviews
+- Evidence images
+- Attendance records
+- Service-hour adjustments
+- Official reports
+- Report items needed to preserve official report history
+- Audit records
+
+Prefer soft deletion, cancellation, or archival for important entities.
+
+The database must never silently destroy official student records because a parent record was removed.
+
+Use foreign keys for data integrity.
+
+Use unique constraints where defined.
+
+Use check constraints where defined.
+
+Use appropriate indexes.
+
+Use partial unique indexes where specified.
+
+Cross-table business rules that cannot safely be implemented as ordinary database constraints must be enforced in Laravel services, policies, and transactions.
+
+Capacity handling must use database transactions and row locking.
+
+---
+
+# 11. UNIQUE SYSTEM FEATURES
+
+These features are important. Do not remove them simply because a basic CRUD implementation is easier.
+
+## Feature 1: Verified service hours
+
+Students cannot simply enter their own credited service hours.
+
+Attendance must be reviewed by an authorized Coordinator.
+
+Only verified attendance hours count.
+
+Only approved adjustments count.
+
+## Feature 2: Accomplishment version history
+
+Every revision is saved.
+
+Old versions are preserved.
+
+The Coordinator can review the submitted version and its history.
+
+## Feature 3: Categorized photo evidence
+
+Students upload before, during, after, and other evidence.
+
+Every image is associated with a particular accomplishment submission version.
+
+## Feature 4: Targeted task visibility
+
+Tasks can target:
+
+- All eligible students
+- Specific sections
+- Selected students
+
+The system must enforce visibility in the backend.
+
+## Feature 5: Official template-based RSS reports
+
+Templates belong to colleges.
+
+Templates are versioned.
+
+Individual reports link to exact approved submissions.
+
+Section reports preserve the included submission records.
+
+## Feature 6: Audit trail
+
+Sensitive decisions and actions are logged.
+
+## Feature 7: Multi-college readiness
+
+Start with College of Technology.
+
+Support additional colleges through the college-level structure.
+
+## Feature 8: Student RSS history
+
+Students can monitor:
+
+- Tasks
+- Applications
+- Activities
+- Attendance
+- Verified hours
+- Adjustments
+- Accomplishment submissions
+- Revisions
+- Approvals
+- Authorized reports
+
+## Additional functional features
+
+- Search
+- Sorting
+- Pagination
+- Filters
+- Notifications
+- Dashboard statistics
+- Application capacity management
+- Academic-year management
+- Section history
+- Protected file uploads
+- PDF reporting
+- Account suspension and deactivation
+- Report archival
+- Audit logs
+
+---
+
+# 12. FRONTEND PAGE STRUCTURE
+
+Build a clean, professional, responsive interface appropriate for a college management system.
+
+Use consistent navigation, typography, colors, form styles, status badges, tables, and dialogs.
+
+The interface must work on desktop, tablet, and mobile layouts.
+
+Do not overcomplicate the interface.
+
+Prioritize clarity, usability, accessibility, and consistent page structure.
+
+## Public pages
+
+- Login
+- Registration
+- Forgot password
+- Reset password
+- Account pending approval
+- Access denied
+
+## Student portal pages
+
+- Dashboard
+- My Profile
+- Available Tasks
+- Task Details
+- My Applications
+- Application Details
+- My Activities
+- Attendance
+- Service Hours
+- Hour Adjustments
+- Accomplishments
+- Create Accomplishment
+- Edit Draft
+- Submission History
+- Evidence Gallery
+- Notifications
+- Reports
+
+## Coordinator portal pages
+
+- Dashboard
+- Student Registrations
+- Student Management
+- Student Details
+- Colleges
+- Programs
+- Year Levels
+- Academic Years
+- Sections
+- Section Management
+- Task Categories
+- Task Management
+- Create Task
+- Edit Task
+- Task Details
+- Task Sessions
+- Task Applicants
+- Application Review
+- Attendance Management
+- Attendance Verification
+- Hour Adjustment Requests
+- Accomplishment Management
+- Accomplishment Review
+- Submission History
+- Evidence Viewer
+- Report Generation
+- Individual Reports
+- Section Reports
+- Report Templates
+- Notifications
+- Audit Logs
+- System Settings
+
+## Section Representative portal pages
+
+- Dashboard
+- Section Information
+- Announcements
+- Authorized Tasks
+- Section Activity Overview
+- Authorized Summary Reports
+
+Apply strict permissions to all page routes and backend endpoints.
+
+---
+
+# 13. SYSTEM ARCHITECTURE
+
+Use a maintainable layered architecture.
+
+Expected architecture:
+
+Users
+  |
+  v
+Browser / Responsive Web Interface
+  |
+  v
+Frontend
+  |
+  v
+Laravel Application
+  |
+  +-- Authentication
+  +-- Authorization
+  +-- Controllers
+  +-- Form Requests / Validation
+  +-- Services / Business Logic
+  +-- Policies
+  +-- Notifications
+  +-- Report Generation
+  +-- File Upload Handling
+  +-- Audit Logging
+  |
+  +--------------------+
+  |                    |
+  v                    v
+PostgreSQL          Protected Storage
+Database            Images / Templates / PDFs
+
+## Backend requirements
+
+Use Laravel for:
+
+- Authentication
+- Authorization
+- Routing
+- Controllers
+- Form validation
+- Eloquent models
+- Database migrations or approved SQL scripts
+- Services
+- Transactions
+- Notifications
+- File storage
+- PDF generation
+- Error handling
+- Automated tests
+
+Use service classes for critical workflows rather than placing all business logic in controllers.
+
+Use policies and middleware for authorization.
+
+Do not rely only on frontend conditions to protect data.
+
+## PostgreSQL requirements
+
+PostgreSQL is the authoritative relational database.
+
+Use:
+
+- Foreign keys
+- Unique constraints
+- Check constraints
+- Appropriate indexes
+- Partial indexes
+- Transactions
+- Row locking where needed
+- JSONB for audit values
+- UUID where specified
+
+Do not use SQLite as a substitute for PostgreSQL validation.
+
+Do not require XAMPP.
+
+---
+
+# 14. SECURITY REQUIREMENTS
+
+Security must be implemented across the system.
+
+Required protections:
+
+- Secure password hashing
+- Authentication middleware
+- Role-based access control
+- Record-level authorization
+- CSRF protection
+- Input validation
+- Output escaping
+- SQL injection protection
+- Session security
+- Login rate limiting
+- Protected file storage
+- File upload validation
+- Restricted PDF downloads
+- Audit logging
+- Database transaction integrity
+- Safe deletion policies
+- Protection against unauthorized record access
+
+Test that a student cannot access another student's restricted data by changing an ID in a URL or request.
+
+Test that non-Coordinator users cannot invoke Coordinator endpoints.
+
+Test that only authorized users can review and approve records.
+
+Do not expose private records through unprotected API responses.
+
+---
+
+# 15. CRUD REQUIREMENTS
+
+Implement Create, Read, Update, and Delete functionality where appropriate.
+
+Important: Delete does not always mean physically deleting the database record.
+
+For historical, reviewed, or official data, use controlled archival, deactivation, or soft deletion where appropriate.
+
+Examples:
+
+- Users: registration, view, profile updates, controlled deactivation.
+- Roles: restricted management.
+- Colleges: create, view, update, deactivate.
+- Programs: create, view, update, deactivate.
+- Sections: create, view, update, deactivate.
+- Students: register, view, approve, update authorized information.
+- Academic years: create, view, update, archive.
+- Task categories: create, view, update, deactivate.
+- Tasks: create, view, edit, publish, cancel, archive.
+- Sessions: create, view, update.
+- Applications: submit, view, withdraw when permitted.
+- Application reviews: create and view review history.
+- Accomplishments: draft, view, update draft.
+- Submissions: create versions and view history.
+- Reviews: create and view history.
+- Evidence: upload and view authorized evidence.
+- Attendance: record, view, correct under controlled rules.
+- Adjustments: request, review, approve or reject.
+- Templates: upload, view, activate, deactivate.
+- Reports: generate, view, download, archive.
+- Notifications: create, view, mark read.
+- Audit logs: system generated and authorized viewing.
+
+Never provide unrestricted deletion for official records.
+
+---
+
+# 16. TESTING REQUIREMENTS
+
+Testing is mandatory.
+
+Do not mark a milestone complete merely because the interface looks correct.
+
+## Database tests
+
+Verify:
+
+- Exactly 28 approved tables exist.
+- Column names are correct.
+- Data types are correct.
+- Nullability is correct.
+- Defaults are correct.
+- Foreign keys are correct.
+- Unique constraints are correct.
+- Check constraints are correct.
+- Indexes are correct.
+- Partial unique indexes are correct.
+- Deletion behavior is safe.
+- Seed records are appropriate.
+
+Execute the database against PostgreSQL.
+
+Record the actual execution results.
+
+Do not claim PostgreSQL validation if it was not performed.
+
+## Authentication tests
+
+- Valid login.
+- Invalid login.
+- Pending account.
+- Rejected registration.
+- Suspended account.
+- Deactivated account.
+- Unauthorized routes.
+- Role assignment.
+- Password reset.
+
+## Application tests
+
+- Eligible student applies.
+- Ineligible student cannot apply.
+- Duplicate application is blocked.
+- Capacity is enforced.
+- Coordinator approves.
+- Coordinator rejects.
+- Student receives the correct status.
+- Concurrent applications do not exceed capacity.
+
+## Attendance tests
+
+- Attendance can be recorded.
+- Invalid time range is rejected.
+- Pending attendance is excluded from credited hours.
+- Verified hours are included.
+- Rejected attendance is excluded.
+- Unauthorized users cannot verify attendance.
+
+## Accomplishment tests
+
+- Student creates a draft.
+- Student submits a version.
+- Coordinator approves.
+- Coordinator requests revision.
+- Student resubmits.
+- Previous versions remain preserved.
+- Rejected submissions do not become approved.
+- Unauthorized users cannot review submissions.
+
+## Report tests
+
+- Individual report uses the exact approved submission.
+- Section report includes the appropriate approved submissions.
+- Report template is correct.
+- File is stored safely.
+- Generated report can be accessed by authorized users.
+- Historical report records remain preserved.
+
+## Security tests
+
+- Students cannot access other students' restricted records.
+- Students cannot invoke Coordinator operations.
+- Section Representatives cannot access restricted Coordinator features.
+- Upload validation works.
+- Protected files cannot be downloaded without authorization.
+- Audit logs record sensitive actions.
+
+---
+
+# 17. DEVELOPMENT MILESTONES
+
+Development must be performed milestone by milestone.
+
+Each milestone requires a report, testing, and approval before the next major milestone begins.
+
+## Milestone 1 — Project Foundation
+
+- Inspect current project.
+- Understand repository structure.
+- Confirm Laravel/PHP setup.
+- Confirm PostgreSQL setup.
+- Establish project architecture.
+- Confirm roles and workflows.
+- Confirm frontend approach.
+
+Deliverable: Approved foundation and project structure.
+
+## Milestone 2 — PostgreSQL Database
+
+- Verify all 28 approved tables.
+- Verify column definitions.
+- Verify foreign keys.
+- Verify constraints.
+- Verify indexes.
+- Verify partial unique indexes.
+- Verify seed data.
+- Verify deletion rules.
+- Update ERD.
+- Update discrepancy report.
+- Execute SQL in PostgreSQL.
+- Record successful validation.
+
+Deliverable: Correct, executable, verified database.
+
+## Milestone 3 — Authentication and Authorization
+
+- Login
+- Registration
+- Password management
+- Account status
+- Role-based access
+- Coordinator approval
+- Protected routes
+- Authorization tests
+
+Deliverable: Secure account system.
+
+## Milestone 4 — Academic and Student Management
+
+- Colleges
+- Programs
+- Year levels
+- Academic years
+- Sections
+- Student profiles
+- Student registration review
+- Student section history
+
+Deliverable: Working academic and student management module.
+
+## Milestone 5 — Task Management
+
+- Task categories
+- Task CRUD
+- Task visibility
+- Section targeting
+- Student targeting
+- Capacity
+- Task sessions
+- Publication workflow
+
+Deliverable: Working task management module.
+
+## Milestone 6 — Application Management
+
+- Student task discovery
+- Eligibility
+- Application submission
+- Application review
+- Approval/rejection
+- Withdrawal
+- Capacity concurrency control
+
+Deliverable: Working application workflow.
+
+## Milestone 7 — Attendance and Service Hours
+
+- Attendance records
+- Check-in/check-out information
+- Verification
+- Service hour adjustments
+- Hour calculations
+- Hour summaries
+
+Deliverable: Accurate verified service-hour management.
+
+## Milestone 8 — Accomplishment Management
+
+- Accomplishment drafts
+- Submission versions
+- Evidence uploads
+- Coordinator review
+- Revisions
+- Approval and rejection
+- Submission history
+
+Deliverable: Working accomplishment workflow.
+
+## Milestone 9 — RSS Report Generation
+
+- Official template uploads
+- Template versions
+- Individual reports
+- Section reports
+- PDF storage
+- Report history
+- Report-item tracking
+
+Deliverable: Working RSS PDF generation.
+
+The actual official Lapu-Lapu City College template must be supplied before claiming final layout compliance.
+
+## Milestone 10 — Dashboards and Notifications
+
+- Coordinator dashboard
+- Student dashboard
+- Section Representative dashboard
+- Notifications
+- Statistics
+- RSS progress summaries
+
+Deliverable: Complete role-based dashboards.
+
+## Milestone 11 — Integration, Security, and Testing
+
+- Workflow integration
+- Database integrity
+- Authorization
+- File security
+- Report validation
+- Automated tests
+- Error handling
+- User acceptance testing
+
+Deliverable: Tested system ready for deployment preparation.
+
+## Milestone 12 — Deployment and Finalization
+
+- Production configuration
+- PostgreSQL deployment
+- Environment configuration
+- File storage configuration
+- Backup strategy
+- Deployment documentation
+- User documentation
+- Final acceptance tests
+
+Deliverable: Production-ready system.
+
+---
+
+# 18. MILESTONE APPROVAL RULES
+
+Use this approval procedure:
+
+1. Explain the work completed.
+2. List files created.
+3. List files modified.
+4. Explain important implementation decisions.
+5. Show the test results.
+6. Identify any unresolved issues.
+7. State whether the milestone is complete or still needs revision.
+8. Wait for approval when a milestone requires the user's decision.
+
+Do not mark a milestone completed solely because code was generated.
+
+A milestone is complete only when the required functionality has been implemented and the relevant tests have passed.
+
+Do not proceed past an unapproved milestone with dependent work.
+
+---
+
+# 19. CURRENT PROJECT STATUS AND IMMEDIATE INSTRUCTIONS
+
+The project is currently at:
+
+**Milestone 2 — PostgreSQL Database**
+
+Status: NEEDS REVISION / NOT APPROVED.
+
+The 28-table design in Section 8 is the approved database reference.
+
+A previous comparison report was drafted, but its SQL findings have not yet been independently confirmed against the actual file contents.
+
+The database has not been confirmed as successfully validated in PostgreSQL.
+
+## Immediate task
+
+Before editing anything:
+
+1. Inspect the existing database files.
+2. Report whether each file exists.
+3. Provide or inspect the actual contents of the SQL and database documentation.
+4. Compare the current files against the approved 28-table specification.
+5. Identify confirmed differences.
+6. Identify incorrect claims in existing comparison documents.
+7. Identify missing or additional fields, constraints, indexes, relationships, and seed records.
+8. Identify dangerous CASCADE behavior.
+9. Identify inconsistencies between SQL, ERD, seed data, and discrepancy report.
+10. Prepare a corrected discrepancy report.
+
+Expected files to inspect, if present:
+
+- database/01_create_database.sql
+- database/02_create_tables.sql
+- database/03_constraints.sql
+- database/04_indexes.sql
+- database/05_seed_data.sql
+- database/06_database_erd.md
+- database/DISCREPANCY_REPORT.md
+
+If any file does not exist, report it as missing.
+
+Do not invent its content.
+
+## Important restriction
+
+Do not edit, overwrite, rename, delete, or recreate database files before presenting the verified discrepancy report.
+
+Wait for explicit approval before correcting database files.
+
+After approval, work in this order:
+
+1. 02_create_tables.sql
+2. 03_constraints.sql
+3. 04_indexes.sql
+4. 05_seed_data.sql
+5. 06_database_erd.md
+6. DISCREPANCY_REPORT.md
+
+Review 01_create_database.sql separately and update it only if required and approved.
+
+Then execute the database against PostgreSQL and report the actual result.
+
+Do not move to Milestone 3 until Milestone 2 is verified and approved.
+
+---
+
+# 20. FUTURE ENHANCEMENTS — NOT PART OF THE INITIAL CORE SCOPE
+
+These are possible future enhancements, not mandatory first-version features:
+
+- QR-code attendance
+- Email notifications
+- Advanced analytics
+- Calendar integration
+- Excel export
+- Mobile application
+- Automated reminders
+- Batch report generation
+- Advanced progress analytics
+- Expansion to all colleges
+
+Do not implement these ahead of core requirements.
+
+Present a proposal first if a future feature requires database changes.
+
+---
+
+# 21. FINAL SYSTEM EXPECTATIONS
+
+When complete, the CT-RSS Management System must allow the College of Technology to manage the full RSS lifecycle digitally.
+
+The Coordinator should be able to:
+
+- Manage students.
+- Approve registrations.
+- Manage academic structures.
+- Create and publish service tasks.
+- Control task eligibility.
+- Review applications.
+- Manage sessions.
+- Verify attendance.
+- Approve hour adjustments.
+- Review student accomplishments.
+- Request revisions.
+- Approve final submissions.
+- Upload official templates.
+- Generate individual RSS reports.
+- Generate section RSS reports.
+- View audit history.
+
+Students should be able to:
+
+- Register.
+- Access an approved account.
+- View eligible service tasks.
+- Apply.
+- Monitor application decisions.
+- View activity schedules.
+- Monitor attendance.
+- View verified hours.
+- Submit accomplishments.
+- Upload photographs.
+- Resubmit revisions.
+- Track accomplishment approval.
+- View personal RSS history.
+
+The system must provide:
+
+- Secure role-based access.
+- Accurate service-hour calculations.
+- Complete submission version history.
+- Protected evidence storage.
+- Official template-based PDF reporting.
+- Multi-college-ready academic structure.
+- Historical record preservation.
+- Reliable audit trails.
+- Consistent data integrity.
+
+---
+
+# 22. FINAL INSTRUCTION
+
+Treat this specification as the master reference for the entire CT-RSS Management System project.
+
+Do not simplify away important features.
+
+Do not change the approved 28-table database design without approval.
+
+Do not invent institutional rules or official RSS document layouts.
+
+Do not give Section Representatives Coordinator authority unless explicitly approved.
+
+Do not count unverified service hours.
+
+Do not overwrite submission history.
+
+Do not generate official reports from unapproved accomplishments.
+
+Do not claim that database validation, security testing, or feature implementation has succeeded without actually running and checking it.
+
+Always prioritize correctness, security, maintainability, and faithful implementation of the approved requirements.
+
+**Start by inspecting the existing project and reporting the exact current status of Milestone 2. Do not modify files until the verified discrepancy report has been reviewed and approved.**

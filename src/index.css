@@ -1,0 +1,51 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-display: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+
+    /* Lapu-Lapu City College Institutional Palette */
+    --llcc-navy: #12345a;
+    --llcc-navy-deep: #0b2340;
+    --llcc-blue: #285680;
+    --llcc-gold: #d6a63c;
+    --llcc-bg: #f4f6fa;
+    --llcc-surface: #ffffff;
+    --llcc-text: #1e293b;
+    --llcc-muted: #64748b;
+    --llcc-border: #e2e8f0;
+  }
+
+  html {
+    font-family: var(--font-sans);
+    color: var(--llcc-text);
+    background-color: var(--llcc-bg);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    overflow-x: hidden;
+    background-color: var(--llcc-bg);
+    color: var(--llcc-text);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    text-wrap: balance;
+  }
+
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

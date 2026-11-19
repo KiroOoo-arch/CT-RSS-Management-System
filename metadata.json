@@ -1,0 +1,6 @@
+{
+  "name": "CT-RSS Management System",
+  "description": "Centralized Requirement for Student Service (RSS) management platform for Lapu-Lapu City College — College of Technology.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
