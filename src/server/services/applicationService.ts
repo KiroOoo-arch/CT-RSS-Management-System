@@ -499,7 +499,7 @@ export async function withdrawOrCancelStudentApplication(input: {
     await client.query(
       `UPDATE task_applications
        SET status = $1,
-           decided_at = CASE WHEN $1 = 'cancelled' THEN NOW() ELSE decided_at END,
+           decided_at = CASE WHEN $1::varchar = 'cancelled' THEN NOW() ELSE decided_at END,
            updated_at = NOW()
        WHERE id = $2`,
       [nextStatus, applicationId],

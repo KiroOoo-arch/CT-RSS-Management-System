@@ -27,6 +27,8 @@ export function Modal({
   footer,
 }: ModalProps) {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
     if (!open) {
@@ -37,7 +39,7 @@ export function Modal({
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        onClose();
+        onCloseRef.current();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -45,7 +47,7 @@ export function Modal({
       window.removeEventListener('keydown', handleKeyDown);
       previousFocus?.focus?.();
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open) {
     return null;

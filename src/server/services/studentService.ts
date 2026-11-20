@@ -12,7 +12,12 @@ import { hashPassword, validatePasswordStrength } from '../utils/password.ts';
 import { getTodayIsoDate, validateIsoDateString } from './academicService.ts';
 import { recordAuditLog } from './auditService.ts';
 
-const VALID_SEX_VALUES = new Set(['Male', 'Female', 'Other', 'Prefer not to say']);
+const VALID_SEX_MAP = new Map<string, string>([
+  ['male', 'Male'],
+  ['female', 'Female'],
+  ['other', 'Other'],
+  ['prefer not to say', 'Prefer not to say'],
+]);
 
 function parsePositiveInt(value: unknown, code: string, label: string): number {
   const num = typeof value === 'number' ? value : Number(value);
@@ -48,14 +53,15 @@ function normalizeSex(value: unknown): string | null {
   if (!text) {
     return null;
   }
-  if (!VALID_SEX_VALUES.has(text)) {
+  const matched = VALID_SEX_MAP.get(text.toLowerCase());
+  if (!matched) {
     throw new AppError(
       400,
       'VALIDATION_ERROR',
       'Sex must be one of: Male, Female, Other, Prefer not to say.',
     );
   }
-  return text;
+  return matched;
 }
 
 function normalizeBirthDate(value: unknown): string | null {
@@ -522,7 +528,7 @@ export async function createStudentByCoordinator(input: {
 
     const userInsert = await client.query<{ id: number }>(
       `INSERT INTO users (name, email, password, account_status, email_verified_at)
-       VALUES ($1, $2, $3, $4, CASE WHEN $4 = 'active' THEN NOW() ELSE NULL END)
+       VALUES ($1, $2, $3, $4, CASE WHEN $4::varchar = 'active' THEN NOW() ELSE NULL END)
        RETURNING id`,
       [fullName, email, passwordHash, accountStatus],
     );
@@ -551,8 +557,8 @@ export async function createStudentByCoordinator(input: {
        )
        VALUES (
          $1, $2, $3, $4, $5, $6, $7, $8::date, $9, $10,
-         CASE WHEN $10 = 'approved' THEN $11 ELSE NULL END,
-         CASE WHEN $10 = 'approved' THEN NOW() ELSE NULL END
+         CASE WHEN $10::varchar = 'approved' THEN $11::bigint ELSE NULL END,
+         CASE WHEN $10::varchar = 'approved' THEN NOW() ELSE NULL END
        )
        RETURNING id`,
       [

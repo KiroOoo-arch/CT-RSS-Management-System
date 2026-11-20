@@ -664,8 +664,8 @@ export async function verifyOrCorrectAttendance(input: {
            recorded_hours = $3,
            verified_hours = $4,
            verification_status = $5,
-           verified_by = CASE WHEN $5 = 'pending' THEN NULL ELSE $6::bigint END,
-           verified_at = CASE WHEN $5 = 'pending' THEN NULL ELSE NOW() END,
+           verified_by = CASE WHEN $5::varchar = 'pending' THEN NULL ELSE $6::bigint END,
+           verified_at = CASE WHEN $5::varchar = 'pending' THEN NULL ELSE NOW() END,
            remarks = $7,
            updated_at = NOW()
        WHERE id = $8`,
@@ -1055,6 +1055,7 @@ export async function getServiceHoursSummary(input: {
 
   return {
     ledger,
+    students: ledger,
     adjustments: adjRes.rows.map(mapAdjustmentRow),
     breakdown,
     attendanceRecords,

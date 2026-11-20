@@ -162,7 +162,7 @@ export async function decideStudentRegistration(input: {
     await client.query(
       `UPDATE users
        SET account_status = $1,
-           remember_token = CASE WHEN $1 = 'active' THEN remember_token ELSE NULL END,
+           remember_token = CASE WHEN $1::varchar = 'active' THEN remember_token ELSE NULL END,
            updated_at = NOW()
        WHERE id = $2`,
       [nextAccountStatus, Number(existing.user_id)],
@@ -331,7 +331,7 @@ export async function updateAccountStatus(input: {
     await client.query(
       `UPDATE users
        SET account_status = $1,
-           remember_token = CASE WHEN $1 = 'active' THEN remember_token ELSE NULL END,
+           remember_token = CASE WHEN $1::varchar = 'active' THEN remember_token ELSE NULL END,
            updated_at = NOW()
        WHERE id = $2`,
       [nextStatus, input.targetUserId],

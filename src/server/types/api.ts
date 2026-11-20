@@ -503,6 +503,7 @@ export interface ServiceHourBreakdownTaskItem {
 
 export interface ServiceHoursSummaryResponse {
   ledger: StudentServiceHoursLedgerItem[];
+  students?: StudentServiceHoursLedgerItem[];
   adjustments: ServiceHourAdjustmentRecord[];
   breakdown: ServiceHourBreakdownTaskItem[];
   attendanceRecords: AttendanceRecord[];
@@ -702,6 +703,17 @@ export interface SectionReportPreview {
     name: string;
   } | null;
   metrics: {
+    enrolledStudentCount: number;
+    totalApplications: number;
+    approvedApplications: number;
+    pendingApplications: number;
+    verifiedAttendanceEntries: number;
+    verifiedServiceHours: number;
+    approvedAdjustmentsHours: number;
+    totalCreditedHours: number;
+    approvedAccomplishmentsCount: number;
+  };
+  totals?: {
     enrolledStudentCount: number;
     totalApplications: number;
     approvedApplications: number;

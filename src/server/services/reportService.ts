@@ -1225,6 +1225,17 @@ export async function getSectionReportPreview(input: {
       totalCreditedHours: Math.round((verifiedAttHours + approvedAdjHours) * 100) / 100,
       approvedAccomplishmentsCount: subRes.rows.length,
     },
+    totals: {
+      enrolledStudentCount: Number.parseInt(enrolledRes.rows[0]?.count ?? '0', 10) || 0,
+      totalApplications: Number.parseInt(appRes.rows[0]?.total ?? '0', 10) || 0,
+      approvedApplications: Number.parseInt(appRes.rows[0]?.approved ?? '0', 10) || 0,
+      pendingApplications: Number.parseInt(appRes.rows[0]?.pending ?? '0', 10) || 0,
+      verifiedAttendanceEntries: Number.parseInt(attRes.rows[0]?.entries ?? '0', 10) || 0,
+      verifiedServiceHours: Math.round(verifiedAttHours * 100) / 100,
+      approvedAdjustmentsHours: Math.round(approvedAdjHours * 100) / 100,
+      totalCreditedHours: Math.round((verifiedAttHours + approvedAdjHours) * 100) / 100,
+      approvedAccomplishmentsCount: subRes.rows.length,
+    },
     includedSubmissions: subRes.rows.map((r) => ({
       submissionId: Number(r.submission_id),
       studentNumber: r.student_number,
