@@ -367,6 +367,8 @@ export async function getStudentProfileById(studentId: number) {
     middle_name: string | null;
     last_name: string;
     suffix: string | null;
+    sex: string | null;
+    birth_date: string | null;
     email: string;
     contact_number: string | null;
     registration_status: RegistrationStatus;
@@ -381,6 +383,8 @@ export async function getStudentProfileById(studentId: number) {
        s.middle_name,
        s.last_name,
        s.suffix,
+       s.sex,
+       s.birth_date::text AS birth_date,
        u.email,
        s.contact_number,
        s.registration_status,
@@ -398,6 +402,61 @@ export async function getStudentProfileById(studentId: number) {
     throw new AppError(404, 'STUDENT_NOT_FOUND', 'Student profile not found.');
   }
 
+  const historyRes = await query<{
+    id: number;
+    section_id: number;
+    section_name: string;
+    program_id: number;
+    program_code: string;
+    program_name: string;
+    year_level_id: number;
+    year_level_name: string;
+    academic_year_id: number;
+    academic_year_name: string;
+    enrolled_at: string;
+    ended_at: string | null;
+    is_current: boolean;
+  }>(
+    `SELECT
+       ssh.id,
+       sec.id AS section_id,
+       sec.name AS section_name,
+       p.id AS program_id,
+       p.code AS program_code,
+       p.name AS program_name,
+       yl.id AS year_level_id,
+       yl.name AS year_level_name,
+       ay.id AS academic_year_id,
+       ay.name AS academic_year_name,
+       ssh.enrolled_at::text AS enrolled_at,
+       ssh.ended_at::text AS ended_at,
+       ssh.is_current
+     FROM student_section_history ssh
+     JOIN sections sec ON sec.id = ssh.section_id
+     JOIN programs p ON p.id = sec.program_id
+     JOIN year_levels yl ON yl.id = sec.year_level_id
+     JOIN academic_years ay ON ay.id = ssh.academic_year_id
+     WHERE ssh.student_id = $1
+     ORDER BY ssh.is_current DESC, ssh.enrolled_at DESC, ssh.id DESC`,
+    [studentId],
+  );
+
+  const sectionHistory = historyRes.rows.map((h) => ({
+    historyId: Number(h.id),
+    sectionId: Number(h.section_id),
+    sectionName: h.section_name,
+    programId: Number(h.program_id),
+    programCode: h.program_code,
+    programName: h.program_name,
+    yearLevelId: Number(h.year_level_id),
+    yearLevelName: h.year_level_name,
+    academicYearId: Number(h.academic_year_id),
+    academicYearName: h.academic_year_name,
+    enrolledAt: h.enrolled_at,
+    endedAt: h.ended_at,
+    isCurrent: Boolean(h.is_current),
+  }));
+
   return {
     studentId: Number(row.student_id),
     userId: Number(row.user_id),
@@ -406,10 +465,14 @@ export async function getStudentProfileById(studentId: number) {
     middleName: row.middle_name,
     lastName: row.last_name,
     suffix: row.suffix,
+    sex: row.sex,
+    birthDate: row.birth_date,
     email: row.email,
     contactNumber: row.contact_number,
     registrationStatus: row.registration_status,
     accountStatus: row.account_status,
     reviewedAt: row.reviewed_at,
+    currentSection: sectionHistory.find((item) => item.isCurrent) ?? null,
+    sectionHistory,
   };
 }

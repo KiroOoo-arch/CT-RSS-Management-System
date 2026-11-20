@@ -12,10 +12,28 @@ import type {
 } from './types/index.ts';
 import { AppShell } from './components/layout/AppShell.tsx';
 import { CollegeLogo } from './components/ui/CollegeLogo.tsx';
+import { AcademicYearsPage } from './pages/AcademicYearsPage.tsx';
+import { AccomplishmentsPage } from './pages/AccomplishmentsPage.tsx';
+import { ApplicationsPage } from './pages/ApplicationsPage.tsx';
+import { AttendancePage } from './pages/AttendancePage.tsx';
+import { AuditLogsPage } from './pages/AuditLogsPage.tsx';
 import { FoundationOverviewPage } from './pages/FoundationOverviewPage.tsx';
+import { IndividualReportsPage } from './pages/IndividualReportsPage.tsx';
 import { LoginPage } from './pages/LoginPage.tsx';
 import { ModuleShellPage } from './pages/ModuleShellPage.tsx';
+import { MyProfilePage } from './pages/MyProfilePage.tsx';
+import { NotificationsPage } from './pages/NotificationsPage.tsx';
+import { ProgramsPage } from './pages/ProgramsPage.tsx';
 import { RegistrationsPage } from './pages/RegistrationsPage.tsx';
+import { ReportTemplatesPage } from './pages/ReportTemplatesPage.tsx';
+import { SectionRepSectionPage } from './pages/SectionRepSectionPage.tsx';
+import { SectionRepTasksPage } from './pages/SectionRepTasksPage.tsx';
+import { SectionReportsPage } from './pages/SectionReportsPage.tsx';
+import { SectionsPage } from './pages/SectionsPage.tsx';
+import { ServiceHoursPage } from './pages/ServiceHoursPage.tsx';
+import { StudentsPage } from './pages/StudentsPage.tsx';
+import { StudentTasksPage } from './pages/StudentTasksPage.tsx';
+import { TasksPage } from './pages/TasksPage.tsx';
 
 export default function App() {
   const [authUser, setAuthUser] = useState<AuthenticatedUser | null>(null);
@@ -27,6 +45,7 @@ export default function App() {
   const [devPreviewRole, setDevPreviewRole] = useState<RoleName>('RSS Coordinator');
   const [activePageId, setActivePageId] = useState<string>('dashboard');
   const [signingOut, setSigningOut] = useState(false);
+  const [notificationRefreshKey, setNotificationRefreshKey] = useState(0);
 
   const bootstrapAppState = useCallback(async () => {
     setCheckingSession(true);
@@ -142,13 +161,158 @@ export default function App() {
   const pageTitle = activeItem?.label ?? 'Dashboard';
 
   const renderPage = () => {
-    if (activeItem?.id === 'registrations' && effectiveRole === 'RSS Coordinator') {
+    const authed = Boolean(authUser);
+    const goOverview = () => setActivePageId('dashboard');
+
+    if (activeItem?.id === 'notifications') {
       return (
-        <RegistrationsPage
-          isAuthenticated={Boolean(authUser)}
-          onReturnToOverview={() => setActivePageId('dashboard')}
+        <NotificationsPage
+          isAuthenticated={authed}
+          onReturnToOverview={goOverview}
+          onNotificationsChanged={() => setNotificationRefreshKey((k) => k + 1)}
         />
       );
+    }
+
+    if (effectiveRole === 'RSS Coordinator') {
+      switch (activeItem?.id) {
+        case 'registrations':
+          return <RegistrationsPage isAuthenticated={authed} onReturnToOverview={goOverview} />;
+        case 'academic-years':
+          return <AcademicYearsPage isAuthenticated={authed} onReturnToOverview={goOverview} />;
+        case 'programs':
+          return <ProgramsPage isAuthenticated={authed} onReturnToOverview={goOverview} />;
+        case 'sections':
+          return <SectionsPage isAuthenticated={authed} onReturnToOverview={goOverview} />;
+        case 'students':
+          return <StudentsPage isAuthenticated={authed} onReturnToOverview={goOverview} />;
+        case 'tasks-activities':
+          return <TasksPage isAuthenticated={authed} onReturnToOverview={goOverview} />;
+        case 'applications':
+          return (
+            <ApplicationsPage
+              mode="coordinator"
+              isAuthenticated={authed}
+              onReturnToOverview={goOverview}
+            />
+          );
+        case 'attendance':
+          return (
+            <AttendancePage
+              mode="coordinator"
+              isAuthenticated={authed}
+              onReturnToOverview={goOverview}
+            />
+          );
+        case 'service-hours':
+          return (
+            <ServiceHoursPage
+              mode="coordinator"
+              isAuthenticated={authed}
+              onReturnToOverview={goOverview}
+            />
+          );
+        case 'accomplishments':
+          return (
+            <AccomplishmentsPage
+              mode="coordinator"
+              isAuthenticated={authed}
+              onReturnToOverview={goOverview}
+            />
+          );
+        case 'individual-rss-reports':
+          return (
+            <IndividualReportsPage
+              mode="coordinator"
+              isAuthenticated={authed}
+              onReturnToOverview={goOverview}
+            />
+          );
+        case 'section-rss-reports':
+          return (
+            <SectionReportsPage
+              mode="coordinator"
+              isAuthenticated={authed}
+              onReturnToOverview={goOverview}
+            />
+          );
+        case 'report-templates':
+          return <ReportTemplatesPage isAuthenticated={authed} onReturnToOverview={goOverview} />;
+        case 'audit-logs':
+          return <AuditLogsPage isAuthenticated={authed} onReturnToOverview={goOverview} />;
+        default:
+          break;
+      }
+    }
+
+    if (effectiveRole === 'Student') {
+      switch (activeItem?.id) {
+        case 'my-profile':
+          return <MyProfilePage isAuthenticated={authed} onReturnToOverview={goOverview} />;
+        case 'tasks-activities':
+          return <StudentTasksPage isAuthenticated={authed} onReturnToOverview={goOverview} />;
+        case 'applications':
+          return (
+            <ApplicationsPage
+              mode="student"
+              isAuthenticated={authed}
+              onReturnToOverview={goOverview}
+            />
+          );
+        case 'attendance':
+          return (
+            <AttendancePage
+              mode="student"
+              isAuthenticated={authed}
+              onReturnToOverview={goOverview}
+            />
+          );
+        case 'service-hours':
+          return (
+            <ServiceHoursPage
+              mode="student"
+              isAuthenticated={authed}
+              onReturnToOverview={goOverview}
+            />
+          );
+        case 'accomplishments':
+          return (
+            <AccomplishmentsPage
+              mode="student"
+              isAuthenticated={authed}
+              onReturnToOverview={goOverview}
+            />
+          );
+        case 'individual-rss-reports':
+          return (
+            <IndividualReportsPage
+              mode="student"
+              isAuthenticated={authed}
+              onReturnToOverview={goOverview}
+            />
+          );
+        default:
+          break;
+      }
+    }
+
+    if (effectiveRole === 'Section Representative') {
+      switch (activeItem?.id) {
+        case 'academic-structure':
+          return <SectionRepSectionPage isAuthenticated={authed} onReturnToOverview={goOverview} />;
+        case 'tasks-activities':
+          return <SectionRepTasksPage isAuthenticated={authed} onReturnToOverview={goOverview} />;
+        case 'section-rss-reports':
+          return (
+            <SectionReportsPage
+              mode="section_rep"
+              isAuthenticated={authed}
+              onReturnToOverview={goOverview}
+            />
+          );
+        default:
+          break;
+      }
     }
 
     if (activeItem && activeItem.id !== 'dashboard') {
@@ -157,7 +321,7 @@ export default function App() {
           key={`${effectiveRole}-${activeItem.id}`}
           role={effectiveRole}
           item={activeItem}
-          onReturnToOverview={() => setActivePageId('dashboard')}
+          onReturnToOverview={goOverview}
         />
       );
     }
@@ -166,6 +330,7 @@ export default function App() {
       <FoundationOverviewPage
         user={authUser}
         role={effectiveRole}
+        onNavigate={setActivePageId}
         onChangeDevRole={
           !authUser && import.meta.env.DEV
             ? (nextRole) => {
@@ -186,6 +351,7 @@ export default function App() {
       activePageId={activeItem?.id ?? 'dashboard'}
       pageTitle={pageTitle}
       signingOut={signingOut}
+      notificationRefreshKey={notificationRefreshKey}
       onSelectPage={setActivePageId}
       onSignOut={() => void handleSignOut()}
       onChangeDevRole={

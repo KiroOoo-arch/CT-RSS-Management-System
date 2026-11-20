@@ -10,18 +10,18 @@ export const ROLE_NAVIGATION: Record<RoleName, NavGroup[]> = {
           id: 'dashboard',
           label: 'Dashboard',
           description:
-            'Lapu-Lapu City College CT-RSS foundation overview, live API readiness, and 12-milestone roadmap.',
-          milestoneNumber: 1,
-          milestoneLabel: 'Milestone 1 — Project Foundation',
-          emptyStateTitle: 'Coordinator operational metrics connect in Milestone 10',
+            'Lapu-Lapu City College CT-RSS operational overview with live database metrics and milestone status.',
+          milestoneNumber: 10,
+          milestoneLabel: 'Live Role Dashboard',
+          emptyStateTitle: 'No operational metrics recorded yet',
           emptyStateDescription:
-            'Live database totals for students, tasks, applications, verified hours, and reviews will appear once Milestones 2–10 are completed.',
+            'Live database totals for students, tasks, applications, verified hours, and reports populate as workflows are used.',
         },
       ],
     },
     {
       id: 'student-management',
-      title: 'Student Management',
+      title: 'Academic & Student Management',
       items: [
         {
           id: 'registrations',
@@ -32,32 +32,52 @@ export const ROLE_NAVIGATION: Record<RoleName, NavGroup[]> = {
           milestoneLabel: 'Milestone 3 — Authentication & Authorization',
           emptyStateTitle: 'No pending student registrations yet',
           emptyStateDescription:
-            'Student account submissions and Coordinator approval workflows will be enabled after Milestone 2 (Database) and Milestone 3 (Authentication).',
+            'Student account submissions and Coordinator approval workflows are active.',
           plannedColumns: ['Student Number', 'Full Name', 'Program & Section', 'Submitted At', 'Status', 'Action'],
+        },
+        {
+          id: 'academic-years',
+          label: 'Academic Years',
+          description:
+            'Create and manage institutional academic years, validate date ranges, and designate the single current academic year.',
+          milestoneNumber: 4,
+          milestoneLabel: 'Milestone 4 — Academic & Student Management',
+          emptyStateTitle: 'No academic years created yet',
+          emptyStateDescription:
+            'Create an academic year to organize student section enrollments and reports.',
+        },
+        {
+          id: 'programs',
+          label: 'Programs',
+          description:
+            'Manage degree programs assigned to Lapu-Lapu City College departments, program codes, and active status.',
+          milestoneNumber: 4,
+          milestoneLabel: 'Milestone 4 — Academic & Student Management',
+          emptyStateTitle: 'No academic programs created yet',
+          emptyStateDescription:
+            'Create institutional degree programs assigned to College of Technology.',
+        },
+        {
+          id: 'sections',
+          label: 'Sections',
+          description:
+            'Create and manage sections mapped to programs and year levels, and inspect enrolled students per section.',
+          milestoneNumber: 4,
+          milestoneLabel: 'Milestone 4 — Academic & Student Management',
+          emptyStateTitle: 'No sections created yet',
+          emptyStateDescription:
+            'Create sections under active programs and year levels.',
         },
         {
           id: 'students',
           label: 'Students',
           description:
-            'Authorized student directory, profile records, section history, and credited RSS hour totals.',
+            'Authorized student directory, Coordinator student registration, profile editing, account status management, and section assignment history.',
           milestoneNumber: 4,
           milestoneLabel: 'Milestone 4 — Academic & Student Management',
           emptyStateTitle: 'No students registered yet',
           emptyStateDescription:
-            'Student profiles, academic filtering, and historical section records will populate here in Milestone 4.',
-          plannedColumns: ['Student No.', 'Name', 'Program', 'Year & Section', 'Verified Hours', 'Status'],
-        },
-        {
-          id: 'academic-structure',
-          label: 'Academic Structure',
-          description:
-            'Manage Colleges (starting with College of Technology), Programs, Year Levels, Academic Years, and Sections.',
-          milestoneNumber: 4,
-          milestoneLabel: 'Milestone 4 — Academic & Student Management',
-          emptyStateTitle: 'Academic structure is not populated yet',
-          emptyStateDescription:
-            'Colleges, programs, year levels, academic years, and historical section assignments will be managed here in Milestone 4.',
-          plannedColumns: ['Unit Type', 'Code', 'Name', 'Parent Scope', 'Status'],
+            'Register students or approve student registration requests to populate the student directory.',
         },
       ],
     },
@@ -69,61 +89,56 @@ export const ROLE_NAVIGATION: Record<RoleName, NavGroup[]> = {
           id: 'tasks-activities',
           label: 'Tasks & Activities',
           description:
-            'Manage RSS task categories, draft/published tasks, visibility targeting (all, section, individual), capacity, and scheduled sessions.',
+            'Create and manage RSS task categories, draft and published tasks, audience visibility targeting, participant capacity, and scheduled task sessions.',
           milestoneNumber: 5,
           milestoneLabel: 'Milestone 5 — RSS Task Management',
           emptyStateTitle: 'No RSS tasks created yet',
           emptyStateDescription:
-            'Task category creation, task drafting, target visibility, and session scheduling will be implemented in Milestone 5.',
-          plannedColumns: ['Task Title', 'Category', 'Visibility', 'Capacity', 'Deadline', 'Status'],
+            'Create task categories and draft or publish RSS tasks with visibility targeting and scheduled sessions.',
         },
         {
           id: 'applications',
           label: 'Applications',
           description:
-            'Coordinator review queue for student task applications with capacity locking and decision remarks.',
+            'Coordinator review queue for student task applications with capacity locking, review history, and decision remarks.',
           milestoneNumber: 6,
           milestoneLabel: 'Milestone 6 — Application Management',
           emptyStateTitle: 'No applications found',
           emptyStateDescription:
-            'Student task applications and Coordinator approval/rejection reviews will be implemented in Milestone 6.',
-          plannedColumns: ['Applicant', 'Task', 'Applied At', 'Status', 'Review'],
+            'Student task applications will appear here as eligible students apply to published RSS tasks.',
         },
         {
           id: 'attendance',
           label: 'Attendance',
           description:
-            'Session check-in/check-out attendance records and Coordinator verification queue.',
+            'Session check-in/check-out attendance roster recording, hours verification, and Coordinator corrections.',
           milestoneNumber: 7,
           milestoneLabel: 'Milestone 7 — Attendance & Service Hours',
           emptyStateTitle: 'No attendance records yet',
           emptyStateDescription:
-            'Session attendance recording and Coordinator verification will be built in Milestone 7.',
-          plannedColumns: ['Student', 'Task Session', 'Date', 'Recorded Hrs', 'Verified Hrs', 'Status'],
+            'Select a task session to record participant attendance and verify earned service hours.',
         },
         {
           id: 'service-hours',
           label: 'Service Hours',
           description:
-            'Official credited service-hour ledger (verified attendance plus approved adjustments) and hour-adjustment requests.',
+            'Official credited service-hour ledger (verified attendance plus approved adjustments) and hour-adjustment approvals.',
           milestoneNumber: 7,
           milestoneLabel: 'Milestone 7 — Attendance & Service Hours',
           emptyStateTitle: 'No verified service-hour records yet',
           emptyStateDescription:
-            'Credited service-hour totals and positive/negative adjustment approvals will be implemented in Milestone 7.',
-          plannedColumns: ['Student', 'Verified Attendance', 'Approved Adjustments', 'Total Credited', 'Status'],
+            'Verified attendance hours and approved adjustments automatically compute official student totals here.',
         },
         {
           id: 'accomplishments',
           label: 'Accomplishments',
           description:
-            'Review versioned student accomplishment submissions, categorized evidence photos (before, during, after, other), and revision requests.',
+            'Review versioned student accomplishment submissions, inspect categorized evidence photos (before, during, after, other), and manage revisions.',
           milestoneNumber: 8,
           milestoneLabel: 'Milestone 8 — Accomplishments & Evidence',
           emptyStateTitle: 'No accomplishments submitted',
           emptyStateDescription:
-            'Submission version review, categorized photo gallery inspection, and revision workflows arrive in Milestone 8.',
-          plannedColumns: ['Student', 'Task', 'Version', 'Activity Date', 'Status', 'Action'],
+            'Student accomplishment submissions and uploaded categorized photo evidence will appear here for Coordinator review.',
         },
       ],
     },
@@ -135,37 +150,34 @@ export const ROLE_NAVIGATION: Record<RoleName, NavGroup[]> = {
           id: 'individual-rss-reports',
           label: 'Individual RSS Reports',
           description:
-            'Generate and archive individual official RSS PDF reports linked to exact approved accomplishment submissions.',
+            'Preview, generate, and archive official individual RSS PDF reports linked to exact approved accomplishment submissions.',
           milestoneNumber: 9,
           milestoneLabel: 'Milestone 9 — RSS PDF Report Generation',
           emptyStateTitle: 'No individual RSS reports generated yet',
           emptyStateDescription:
-            'Individual PDF report generation using official college templates will be implemented in Milestone 9.',
-          plannedColumns: ['Student', 'Submission Version', 'Template Version', 'Generated At', 'Status'],
+            'Select an approved student and active report template to generate an official Individual RSS PDF report.',
         },
         {
           id: 'section-rss-reports',
           label: 'Section RSS Reports',
           description:
-            'Generate consolidated section RSS PDF reports tracking exact included submissions through report items.',
+            'Preview, generate, and compare consolidated section RSS PDF reports with report item tracking.',
           milestoneNumber: 9,
           milestoneLabel: 'Milestone 9 — RSS PDF Report Generation',
           emptyStateTitle: 'No section RSS reports generated yet',
           emptyStateDescription:
-            'Consolidated section PDF reports and academic-year archival will be implemented in Milestone 9.',
-          plannedColumns: ['Section', 'Academic Year', 'Template Version', 'Generated At', 'Status'],
+            'Select a section and academic year to preview aggregate participation and generate a consolidated PDF report.',
         },
         {
           id: 'report-templates',
           label: 'Report Templates',
           description:
-            'Upload, version, and activate official college-specific Lapu-Lapu City College RSS PDF templates.',
+            'Create, configure, version, and activate official college-specific Lapu-Lapu City College RSS PDF templates.',
           milestoneNumber: 9,
           milestoneLabel: 'Milestone 9 — RSS PDF Report Generation',
-          emptyStateTitle: 'No official report templates uploaded yet',
+          emptyStateTitle: 'No official report templates created yet',
           emptyStateDescription:
-            'College-specific template upload and version preservation will be implemented in Milestone 9.',
-          plannedColumns: ['Template Name', 'College', 'Version', 'Active', 'Uploaded At'],
+            'Create an active college report template before generating official Individual or Section RSS PDF reports.',
         },
       ],
     },
@@ -177,24 +189,23 @@ export const ROLE_NAVIGATION: Record<RoleName, NavGroup[]> = {
           id: 'notifications',
           label: 'Notifications',
           description:
-            'In-system notifications for registrations, task applications, attendance verification, and accomplishment submissions.',
+            'In-system workflow notifications for registrations, task applications, attendance verification, accomplishments, and reports.',
           milestoneNumber: 10,
           milestoneLabel: 'Milestone 10 — Dashboards & Notifications',
           emptyStateTitle: 'No notifications yet',
           emptyStateDescription:
-            'Database-backed notifications will be enabled in Milestone 10.',
+            'Workflow notifications triggered by portal activity will appear here.',
         },
         {
           id: 'audit-logs',
           label: 'Audit Logs',
           description:
-            'Read-only, immutable audit trail of sensitive approvals, role assignments, verification decisions, and generated reports.',
+            'Read-only, immutable audit trail of logins, approvals, role assignments, attendance verifications, and generated reports.',
           milestoneNumber: 11,
           milestoneLabel: 'Milestone 11 — Integration, Testing & Security',
-          emptyStateTitle: 'No audit log entries recorded yet',
+          emptyStateTitle: 'No audit log entries matched',
           emptyStateDescription:
-            'Read-only audit records backed by the audit_logs JSONB table activate alongside authenticated workflows.',
-          plannedColumns: ['Timestamp', 'Actor', 'Action', 'Subject', 'Details'],
+            'System audit records backed by PostgreSQL audit_logs appear here for security and accountability review.',
         },
       ],
     },
@@ -208,12 +219,12 @@ export const ROLE_NAVIGATION: Record<RoleName, NavGroup[]> = {
           id: 'dashboard',
           label: 'Dashboard',
           description:
-            'Personal Student Service portal overview showing verified RSS hours, active tasks, and submission status.',
-          milestoneNumber: 1,
-          milestoneLabel: 'Milestone 1 — Project Foundation',
-          emptyStateTitle: 'Personal RSS metrics connect in Milestone 10',
+            'Personal Student Service portal overview showing verified RSS hours, active applications, and submission status.',
+          milestoneNumber: 10,
+          milestoneLabel: 'Live Student Dashboard',
+          emptyStateTitle: 'Personal RSS metrics load from your records',
           emptyStateDescription:
-            'Your verified service hours, applications, and upcoming task sessions will load once authentication and PostgreSQL modules are built.',
+            'Your verified service hours, applications, and accomplishments appear here.',
         },
       ],
     },
@@ -228,9 +239,9 @@ export const ROLE_NAVIGATION: Record<RoleName, NavGroup[]> = {
             'Personal student number, registration approval status, program, year level, and current section.',
           milestoneNumber: 4,
           milestoneLabel: 'Milestone 4 — Academic & Student Management',
-          emptyStateTitle: 'Student profile requires authentication (Milestone 3)',
+          emptyStateTitle: 'Student profile requires authentication',
           emptyStateDescription:
-            'Your academic profile and section history will appear here once student authentication is active.',
+            'Your academic profile and section history are linked to your approved student record.',
         },
       ],
     },
@@ -242,25 +253,23 @@ export const ROLE_NAVIGATION: Record<RoleName, NavGroup[]> = {
           id: 'tasks-activities',
           label: 'Available Tasks',
           description:
-            'Published RSS tasks filtered on the backend for your college, section, and student eligibility.',
+            'Published RSS tasks filtered on the backend for your college, section, and student eligibility with direct application submission.',
           milestoneNumber: 5,
           milestoneLabel: 'Milestone 5 — RSS Task Management',
           emptyStateTitle: 'No RSS tasks available',
           emptyStateDescription:
-            'Eligible tasks published by the College of Technology Coordinator will appear here in Milestone 5.',
-          plannedColumns: ['Task Title', 'Category', 'Required Hours', 'Deadline', 'Slots', 'Action'],
+            'Eligible tasks published by the College of Technology RSS Coordinator will appear here.',
         },
         {
           id: 'applications',
           label: 'My Applications',
           description:
-            'Track your pending, approved, rejected, or withdrawn RSS task applications.',
+            'Track pending, approved, rejected, withdrawn, or cancelled RSS task applications and Coordinator remarks.',
           milestoneNumber: 6,
           milestoneLabel: 'Milestone 6 — Application Management',
           emptyStateTitle: 'No applications found',
           emptyStateDescription:
-            'Your task applications and Coordinator review remarks will appear here in Milestone 6.',
-          plannedColumns: ['Task', 'Applied Date', 'Status', 'Coordinator Remarks'],
+            'Apply to an eligible published task under Available Tasks to track your application here.',
         },
         {
           id: 'attendance',
@@ -271,8 +280,7 @@ export const ROLE_NAVIGATION: Record<RoleName, NavGroup[]> = {
           milestoneLabel: 'Milestone 7 — Attendance & Service Hours',
           emptyStateTitle: 'No attendance records yet',
           emptyStateDescription:
-            'Recorded attendance and verified hours per session will appear here in Milestone 7.',
-          plannedColumns: ['Activity', 'Session Date', 'Recorded Hrs', 'Verified Hrs', 'Status'],
+            'Attendance recorded by the RSS Coordinator for your approved task sessions will appear here.',
         },
         {
           id: 'service-hours',
@@ -283,19 +291,18 @@ export const ROLE_NAVIGATION: Record<RoleName, NavGroup[]> = {
           milestoneLabel: 'Milestone 7 — Attendance & Service Hours',
           emptyStateTitle: 'No credited service hours recorded yet',
           emptyStateDescription:
-            'Your verified attendance hours and approved adjustments will appear here in Milestone 7.',
+            'Verified attendance hours, pending hours, and adjustment requests appear here.',
         },
         {
           id: 'accomplishments',
           label: 'Accomplishments',
           description:
-            'Draft accomplishments, upload categorized photo evidence, view submission version history, and respond to revisions.',
+            'Draft accomplishments, upload categorized photo evidence, view immutable submission version history, and respond to revisions.',
           milestoneNumber: 8,
           milestoneLabel: 'Milestone 8 — Accomplishments & Evidence',
           emptyStateTitle: 'No accomplishments submitted',
           emptyStateDescription:
-            'Accomplishment drafting, photo evidence uploads, and immutable version history arrive in Milestone 8.',
-          plannedColumns: ['Activity', 'Version', 'Submitted At', 'Status'],
+            'Submit your accomplishment report and categorized evidence images for any approved task.',
         },
       ],
     },
@@ -307,23 +314,23 @@ export const ROLE_NAVIGATION: Record<RoleName, NavGroup[]> = {
           id: 'individual-rss-reports',
           label: 'My RSS Reports',
           description:
-            'Authorized individual RSS PDF reports generated from your approved accomplishment submissions.',
+            'Authorized individual RSS PDF reports generated from your approved accomplishment submissions and printable service summary.',
           milestoneNumber: 9,
           milestoneLabel: 'Milestone 9 — RSS PDF Report Generation',
           emptyStateTitle: 'No authorized reports available yet',
           emptyStateDescription:
-            'Approved individual RSS PDF reports will be available for download here in Milestone 9.',
+            'Official Individual RSS PDF reports generated for your approved accomplishments will appear here.',
         },
         {
           id: 'notifications',
           label: 'Notifications',
           description:
-            'Personal alerts for registration approval, task eligibility, application outcomes, attendance, and revisions.',
+            'Personal alerts for registration approval, application outcomes, attendance verification, revisions, and generated reports.',
           milestoneNumber: 10,
           milestoneLabel: 'Milestone 10 — Dashboards & Notifications',
           emptyStateTitle: 'No notifications yet',
           emptyStateDescription:
-            'Workflow notifications will appear here once operational modules are connected.',
+            'Workflow notifications related to your student service participation will appear here.',
         },
       ],
     },
@@ -338,11 +345,11 @@ export const ROLE_NAVIGATION: Record<RoleName, NavGroup[]> = {
           label: 'Dashboard',
           description:
             'Read-only section overview scoped strictly to authorized section information and participation summaries.',
-          milestoneNumber: 1,
-          milestoneLabel: 'Milestone 1 — Project Foundation',
-          emptyStateTitle: 'Section summary connects in Milestone 10',
+          milestoneNumber: 10,
+          milestoneLabel: 'Live Section Dashboard',
+          emptyStateTitle: 'Section summary loads from your assigned section',
           emptyStateDescription:
-            'Permitted aggregate section participation summaries will appear here without exposing private student records.',
+            'Permitted aggregate section participation summaries appear here without exposing private student records.',
         },
       ],
     },
@@ -354,12 +361,12 @@ export const ROLE_NAVIGATION: Record<RoleName, NavGroup[]> = {
           id: 'academic-structure',
           label: 'Section Information',
           description:
-            'Assigned college, program, year level, section identifier, and current academic year.',
+            'Assigned college, program, year level, section identifier, current academic year, and aggregate participation metrics.',
           milestoneNumber: 4,
-          milestoneLabel: 'Milestone 4 — Academic & Student Management',
+          milestoneLabel: 'Section Scope (Read-Only)',
           emptyStateTitle: 'No section assignment linked yet',
           emptyStateDescription:
-            'Authorized section scope details will populate once authentication and academic records are active.',
+            'Ask the RSS Coordinator to link your student profile and current section assignment.',
         },
         {
           id: 'tasks-activities',
@@ -367,21 +374,21 @@ export const ROLE_NAVIGATION: Record<RoleName, NavGroup[]> = {
           description:
             'Read-only view of published RSS tasks visible to your assigned section.',
           milestoneNumber: 5,
-          milestoneLabel: 'Milestone 5 — RSS Task Management',
+          milestoneLabel: 'Milestone 5 — RSS Task Visibility',
           emptyStateTitle: 'No authorized section tasks yet',
           emptyStateDescription:
-            'Published tasks targeting your section or all students will appear here in Milestone 5.',
+            'Published tasks targeting your section or all college students appear here.',
         },
         {
           id: 'section-rss-reports',
           label: 'Authorized Summaries',
           description:
-            'Read-only section-level participation summaries permitted by Coordinator policies (no approval controls).',
+            'Read-only section-level participation summaries and official section PDF reports (no approval controls).',
           milestoneNumber: 9,
-          milestoneLabel: 'Milestone 9 — RSS PDF Report Generation',
-          emptyStateTitle: 'No authorized summary reports yet',
+          milestoneLabel: 'Milestone 9 — Section RSS Reports',
+          emptyStateTitle: 'No authorized section reports yet',
           emptyStateDescription:
-            'Authorized section summaries will appear here in Milestone 9.',
+            'Consolidated section PDF reports generated for your assigned section appear here.',
         },
       ],
     },
@@ -392,12 +399,11 @@ export const ROLE_NAVIGATION: Record<RoleName, NavGroup[]> = {
         {
           id: 'notifications',
           label: 'Notifications',
-          description: 'Authorized section announcements and task updates.',
+          description: 'Personal and authorized section workflow notifications.',
           milestoneNumber: 10,
-          milestoneLabel: 'Milestone 10 — Dashboards & Notifications',
+          milestoneLabel: 'Milestone 10 — Notifications',
           emptyStateTitle: 'No notifications yet',
-          emptyStateDescription:
-            'Section notifications will appear here once operational modules are connected.',
+          emptyStateDescription: 'Notifications for your account will appear here.',
         },
       ],
     },

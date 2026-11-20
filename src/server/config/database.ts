@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { Pool, type PoolClient, type QueryResult, type QueryResultRow } from 'pg';
 import { AppError } from '../middleware/errorHandler.ts';
 import type { DatabaseReadiness } from '../types/api.ts';
@@ -12,6 +13,13 @@ const ALL_DB_ENV_VARS = [
   'SQL_SSL',
 ] as const;
 const TABLE_COUNT_TARGET = 28;
+
+interface TestTxContext {
+  client: PoolClient;
+  savepointCounter: number;
+}
+
+const testTxStorage = new AsyncLocalStorage<TestTxContext>();
 
 let poolInstance: Pool | null = null;
 let poolSignature: string | null = null;
@@ -258,6 +266,11 @@ export async function query<T extends QueryResultRow = QueryResultRow>(
   text: string,
   params?: readonly unknown[],
 ): Promise<QueryResult<T>> {
+  const testCtx = testTxStorage.getStore();
+  if (testCtx) {
+    return testCtx.client.query<T>(text, params ? [...params] : undefined);
+  }
+
   const pool = getPool();
   try {
     return await pool.query<T>(text, params ? [...params] : undefined);
@@ -287,6 +300,25 @@ export async function query<T extends QueryResultRow = QueryResultRow>(
 }
 
 export async function withTransaction<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
+  const testCtx = testTxStorage.getStore();
+  if (testCtx) {
+    const spName = `ct_rss_sp_${++testCtx.savepointCounter}`;
+    await testCtx.client.query(`SAVEPOINT ${spName}`);
+    try {
+      const result = await fn(testCtx.client);
+      await testCtx.client.query(`RELEASE SAVEPOINT ${spName}`);
+      return result;
+    } catch (error) {
+      try {
+        await testCtx.client.query(`ROLLBACK TO SAVEPOINT ${spName}`);
+        await testCtx.client.query(`RELEASE SAVEPOINT ${spName}`);
+      } catch {
+        // Ignore rollback failure on aborted connection
+      }
+      throw error;
+    }
+  }
+
   const pool = getPool();
   let client: PoolClient;
   try {
@@ -309,6 +341,24 @@ export async function withTransaction<T>(fn: (client: PoolClient) => Promise<T>)
     }
     throw error;
   } finally {
+    client.release();
+  }
+}
+
+export async function runWithRollbackTransaction<T>(fn: () => Promise<T>): Promise<T> {
+  const pool = getPool();
+  const client = await pool.connect();
+  const ctx: TestTxContext = { client, savepointCounter: 0 };
+
+  try {
+    await client.query('BEGIN');
+    return await testTxStorage.run(ctx, fn);
+  } finally {
+    try {
+      await client.query('ROLLBACK');
+    } catch {
+      // Ignore rollback failures
+    }
     client.release();
   }
 }

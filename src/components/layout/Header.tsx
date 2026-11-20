@@ -1,12 +1,14 @@
-import { useEffect, useRef, useState } from 'react';
-import { Bell, ChevronDown, ChevronRight, LogOut, Menu, ShieldCheck, UserCheck } from 'lucide-react';
-import type { AuthenticatedUser, RoleName } from '../../types/index.ts';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Bell, Check, ChevronDown, ChevronRight, LogOut, Menu, ShieldCheck, UserCheck } from 'lucide-react';
+import { apiGet, apiPatch } from '../../services/apiClient.ts';
+import type { AuthenticatedUser, NotificationRecord, RoleName } from '../../types/index.ts';
 
 interface HeaderProps {
   user: AuthenticatedUser | null;
   role: RoleName;
   pageTitle: string;
   signingOut: boolean;
+  notificationRefreshKey?: number;
   onOpenMobileMenu: () => void;
   onSignOut: () => void;
   onChangeDevRole?: (role: RoleName) => void;
@@ -20,6 +22,7 @@ export function Header({
   role,
   pageTitle,
   signingOut,
+  notificationRefreshKey = 0,
   onOpenMobileMenu,
   onSignOut,
   onChangeDevRole,
@@ -27,10 +30,32 @@ export function Header({
 }: HeaderProps) {
   const [notifOpen, setNotifOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [notifications, setNotifications] = useState<NotificationRecord[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const notifRef = useRef<HTMLDivElement>(null);
   const accountRef = useRef<HTMLDivElement>(null);
 
-  const unreadCount = 0;
+  const loadNotifications = useCallback(async () => {
+    if (!user) {
+      setNotifications([]);
+      setUnreadCount(0);
+      return;
+    }
+    try {
+      const res = await apiGet<{
+        notifications: NotificationRecord[];
+        unreadCount: number;
+      }>('/api/v1/notifications?limit=6');
+      setNotifications(res.notifications);
+      setUnreadCount(res.unreadCount);
+    } catch {
+      // Ignore background fetch error silently
+    }
+  }, [user]);
+
+  useEffect(() => {
+    void loadNotifications();
+  }, [loadNotifications, notificationRefreshKey]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -54,6 +79,15 @@ export function Header({
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
+
+  const handleMarkRead = async (id: string) => {
+    try {
+      await apiPatch(`/api/v1/notifications/${id}/read`);
+      await loadNotifications();
+    } catch {
+      // Ignore error
+    }
+  };
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b border-[#E2E8F0] bg-white px-4 sm:px-6 lg:px-8">
@@ -88,8 +122,12 @@ export function Header({
           <button
             type="button"
             onClick={() => {
-              setNotifOpen((prev) => !prev);
+              const next = !notifOpen;
+              setNotifOpen(next);
               setAccountMenuOpen(false);
+              if (next) {
+                void loadNotifications();
+              }
             }}
             aria-expanded={notifOpen}
             aria-haspopup="true"
@@ -97,28 +135,64 @@ export function Header({
             className="relative inline-flex h-10 w-10 items-center justify-center rounded-lg border border-[#E2E8F0] bg-white text-[#1E293B] hover:bg-[#F4F6FA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12345A] cursor-pointer"
           >
             <Bell className="h-4 w-4" aria-hidden="true" />
+            {unreadCount > 0 ? (
+              <span className="absolute -right-1 -top-1 inline-flex min-w-[18px] items-center justify-center rounded-full bg-[#DC2626] px-1 py-0.5 text-[10px] font-bold leading-none text-white tabular-nums">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            ) : null}
           </button>
 
           {notifOpen ? (
-            <div className="absolute right-0 mt-2 w-72 rounded-lg border border-[#E2E8F0] bg-white p-4 shadow-lg sm:w-80">
+            <div className="absolute right-0 mt-2 w-80 rounded-lg border border-[#E2E8F0] bg-white p-4 shadow-lg sm:w-96">
               <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-2.5">
                 <p className="text-sm font-semibold text-[#1E293B]">Notifications</p>
-                <span className="text-xs text-[#64748B] tabular-nums">
+                <span className="text-xs font-medium text-[#12345A] tabular-nums">
                   {unreadCount} unread
                 </span>
               </div>
-              <p className="py-5 text-center text-xs leading-relaxed text-[#64748B]">
-                Notification inbox listing connects in Milestone 10. Registration submissions already record real notifications in PostgreSQL.
-              </p>
+              {!user ? (
+                <p className="py-5 text-center text-xs leading-relaxed text-[#64748B]">
+                  Sign in to view database-backed notifications for your account.
+                </p>
+              ) : notifications.length === 0 ? (
+                <p className="py-5 text-center text-xs leading-relaxed text-[#64748B]">
+                  No notifications recorded for your account yet.
+                </p>
+              ) : (
+                <ul className="max-h-72 divide-y divide-[#E2E8F0] overflow-y-auto py-1">
+                  {notifications.map((item) => (
+                    <li
+                      key={item.id}
+                      className={`py-2.5 text-xs ${item.readAt ? 'opacity-75' : 'bg-[#F4F6FA]/70 px-2 rounded'}`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="font-semibold text-[#1E293B]">{item.title}</p>
+                        {!item.readAt ? (
+                          <button
+                            type="button"
+                            onClick={() => void handleMarkRead(item.id)}
+                            title="Mark as read"
+                            className="inline-flex items-center gap-0.5 text-[11px] font-medium text-[#12345A] hover:underline shrink-0 cursor-pointer"
+                          >
+                            <Check className="h-3 w-3" aria-hidden="true" />
+                            <span>Read</span>
+                          </button>
+                        ) : null}
+                      </div>
+                      <p className="mt-0.5 text-[#64748B] line-clamp-2">{item.message}</p>
+                    </li>
+                  ))}
+                </ul>
+              )}
               <button
                 type="button"
                 onClick={() => {
                   setNotifOpen(false);
                   onOpenNotificationsPage();
                 }}
-                className="min-h-9 w-full rounded-lg border border-[#E2E8F0] bg-[#F4F6FA] px-3 py-2 text-xs font-medium text-[#12345A] hover:bg-slate-200/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12345A] cursor-pointer"
+                className="mt-2 min-h-9 w-full rounded-lg border border-[#E2E8F0] bg-[#F4F6FA] px-3 py-2 text-xs font-medium text-[#12345A] hover:bg-slate-200/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12345A] cursor-pointer"
               >
-                View Notifications Page
+                Open Notifications Center
               </button>
             </div>
           ) : null}

@@ -170,7 +170,7 @@ export async function getSectionRepOverview(
       college: 'College of Technology',
       role: 'Section Representative',
       message:
-        'Section-level academic assignments and participation summaries connect in Milestones 4–10. No private student credentials or approval actions are exposed.',
+        'Read-only section scope active. View your assigned section roster summary, eligible tasks, and authorized section RSS reports without administrative privileges.',
     },
     requestId: req.requestId,
   };

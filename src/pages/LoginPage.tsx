@@ -10,7 +10,7 @@ import {
   ShieldCheck,
   UserPlus,
 } from 'lucide-react';
-import { ApiClientError, apiPost, setCsrfToken } from '../services/apiClient.ts';
+import { ApiClientError, apiGet, apiPost, setCsrfToken } from '../services/apiClient.ts';
 import type {
   AuthSessionResponse,
   AuthenticatedUser,
@@ -106,7 +106,21 @@ export function LoginPage({
         password,
       });
       setCsrfToken(session.csrfToken);
-      onAuthenticated(session.user);
+
+      try {
+        const verified = await apiGet<AuthSessionResponse>('/api/v1/auth/me');
+        setCsrfToken(verified.csrfToken);
+        onAuthenticated(verified.user);
+      } catch (verifyErr) {
+        setCsrfToken(null);
+        if (verifyErr instanceof ApiClientError && verifyErr.status === 401) {
+          setLoginError(
+            'Your credentials matched, but your browser did not retain the HttpOnly session cookie. Please allow cookies for this site or open the portal in a dedicated tab, then sign in again.',
+          );
+          return;
+        }
+        throw verifyErr;
+      }
     } catch (err) {
       if (err instanceof ApiClientError) {
         setLoginError(err.message);

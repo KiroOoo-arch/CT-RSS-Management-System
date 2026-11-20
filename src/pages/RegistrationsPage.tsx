@@ -32,6 +32,7 @@ export function RegistrationsPage({
   const [pendingDecision, setPendingDecision] = useState<'approved' | 'rejected' | null>(null);
   const [remarks, setRemarks] = useState('');
   const [submittingDecision, setSubmittingDecision] = useState(false);
+  const [decisionError, setDecisionError] = useState<string | null>(null);
 
   const loadRegistrations = useCallback(async () => {
     if (!isAuthenticated) {
@@ -92,7 +93,7 @@ export function RegistrationsPage({
       return;
     }
     setSubmittingDecision(true);
-    setError(null);
+    setDecisionError(null);
     try {
       await apiPost(`/api/v1/coordinator/registrations/${selectedRecord.studentId}/decision`, {
         decision: pendingDecision,
@@ -104,9 +105,9 @@ export function RegistrationsPage({
       await loadRegistrations();
     } catch (err) {
       if (err instanceof ApiClientError) {
-        setError(err.message);
+        setDecisionError(err.message);
       } else {
-        setError('Unable to save Coordinator registration decision.');
+        setDecisionError('Unable to save Coordinator registration decision.');
       }
     } finally {
       setSubmittingDecision(false);
@@ -170,6 +171,7 @@ export function RegistrationsPage({
                 setSelectedRecord(item);
                 setPendingDecision('approved');
                 setRemarks('');
+                setDecisionError(null);
               }}
             >
               Approve
@@ -182,6 +184,7 @@ export function RegistrationsPage({
                 setSelectedRecord(item);
                 setPendingDecision('rejected');
                 setRemarks('');
+                setDecisionError(null);
               }}
             >
               Reject
@@ -333,6 +336,14 @@ export function RegistrationsPage({
         }
       >
         <div className="space-y-4">
+          {decisionError ? (
+            <div
+              role="alert"
+              className="rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-xs text-red-900"
+            >
+              {decisionError}
+            </div>
+          ) : null}
           <p className="text-sm text-[#64748B]">
             {pendingDecision === 'approved'
               ? 'Approving this registration activates the student account and enables sign-in.'

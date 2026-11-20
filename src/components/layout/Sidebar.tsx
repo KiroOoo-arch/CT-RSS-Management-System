@@ -2,7 +2,9 @@ import { useState } from 'react';
 import {
   Award,
   Bell,
+  BookOpen,
   Building2,
+  CalendarRange,
   CheckSquare,
   ChevronDown,
   ChevronRight,
@@ -11,6 +13,7 @@ import {
   FileBarChart2,
   FileSpreadsheet,
   FileText,
+  Layers,
   LayoutDashboard,
   ScrollText,
   UserCheck,
@@ -38,6 +41,12 @@ function getNavIcon(itemId: string) {
       return <LayoutDashboard className={iconClass} aria-hidden="true" />;
     case 'registrations':
       return <UserCheck className={iconClass} aria-hidden="true" />;
+    case 'academic-years':
+      return <CalendarRange className={iconClass} aria-hidden="true" />;
+    case 'programs':
+      return <BookOpen className={iconClass} aria-hidden="true" />;
+    case 'sections':
+      return <Layers className={iconClass} aria-hidden="true" />;
     case 'students':
       return <Users className={iconClass} aria-hidden="true" />;
     case 'academic-structure':
@@ -188,7 +197,7 @@ export function Sidebar({
       {/* Quiet Institutional Footer */}
       <div className="border-t border-white/10 px-4 py-3 text-[11px] text-slate-300">
         <p className="font-medium text-white">Student Service Portal</p>
-        <p className="mt-0.5 text-slate-400">Milestone 2 · Database &amp; Auth Security</p>
+        <p className="mt-0.5 text-slate-400">College of Technology · LLCC</p>
       </div>
     </div>
   );

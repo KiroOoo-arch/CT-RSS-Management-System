@@ -12,7 +12,7 @@ import { getSessionSecurityStatus } from './src/server/utils/session.ts';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-async function startServer(): Promise<void> {
+export async function createApp(options?: { enableVite?: boolean }): Promise<express.Express> {
   if (serverConfig.nodeEnv === 'production' && getSessionSecurityStatus().usingEphemeralFallback) {
     throw new Error(
       'Refusing to start production server without a configured SESSION_SECRET of at least 16 characters.',
@@ -21,9 +21,9 @@ async function startServer(): Promise<void> {
   const app = express();
 
   app.disable('x-powered-by');
-  app.set('trust proxy', 1);
-  app.use(express.json({ limit: '2mb' }));
-  app.use(express.urlencoded({ extended: true }));
+  app.set('trust proxy', true);
+  app.use(express.json({ limit: '45mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '2mb' }));
   app.use(requestContextMiddleware);
 
   // Serve official college seal for direct /favicon.ico browser requests
@@ -38,13 +38,14 @@ async function startServer(): Promise<void> {
   // Return structured 404 JSON for unmatched API routes
   app.use('/api', apiNotFoundHandler);
 
-  if (serverConfig.nodeEnv !== 'production') {
+  const enableVite = options?.enableVite ?? true;
+  if (serverConfig.nodeEnv !== 'production' && enableVite) {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
     });
     app.use(vite.middlewares);
-  } else {
+  } else if (serverConfig.nodeEnv === 'production') {
     const distDir = path.resolve(__dirname, 'dist');
     app.use(express.static(distDir));
     app.get('*', (_req, res) => {
@@ -53,6 +54,11 @@ async function startServer(): Promise<void> {
   }
 
   app.use(globalErrorHandler);
+  return app;
+}
+
+async function startServer(): Promise<void> {
+  const app = await createApp({ enableVite: serverConfig.nodeEnv !== 'production' });
 
   const server = app.listen(serverConfig.port, '0.0.0.0', () => {
     console.log(
@@ -79,7 +85,13 @@ async function startServer(): Promise<void> {
   process.on('SIGTERM', () => shutdown('SIGTERM'));
 }
 
-startServer().catch((error) => {
-  console.error('[CT-RSS Management System] Fatal startup error:', error);
-  process.exit(1);
-});
+const isDirectEntry =
+  typeof process.argv[1] === 'string' &&
+  path.resolve(process.argv[1]) === path.resolve(__filename);
+
+if (isDirectEntry) {
+  startServer().catch((error) => {
+    console.error('[CT-RSS Management System] Fatal startup error:', error);
+    process.exit(1);
+  });
+}

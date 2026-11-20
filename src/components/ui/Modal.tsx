@@ -6,11 +6,26 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   description?: string;
+  size?: 'md' | 'lg' | 'xl';
   children: ReactNode;
   footer?: ReactNode;
 }
 
-export function Modal({ open, onClose, title, description, children, footer }: ModalProps) {
+const MODAL_SIZE_CLASS: Record<'md' | 'lg' | 'xl', string> = {
+  md: 'max-w-lg',
+  lg: 'max-w-2xl',
+  xl: 'max-w-4xl',
+};
+
+export function Modal({
+  open,
+  onClose,
+  title,
+  description,
+  size = 'md',
+  children,
+  footer,
+}: ModalProps) {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -48,7 +63,9 @@ export function Modal({ open, onClose, title, description, children, footer }: M
         }
       }}
     >
-      <div className="flex max-h-[90vh] w-full max-w-lg flex-col rounded-lg border border-[#E2E8F0] bg-white shadow-xl">
+      <div
+        className={`flex max-h-[90vh] w-full ${MODAL_SIZE_CLASS[size]} flex-col rounded-lg border border-[#E2E8F0] bg-white shadow-xl`}
+      >
         <div className="flex items-start justify-between gap-4 border-b border-[#E2E8F0] px-5 py-4 shrink-0">
           <div className="min-w-0">
             <h2 id="modal-title" className="text-base font-semibold text-[#1E293B]">

@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import type { Request, Response } from 'express';
+import type { CookieOptions, Request, Response } from 'express';
 
 export const SESSION_COOKIE_NAME = 'ct_rss_session';
 export const CSRF_COOKIE_NAME = 'ct_rss_csrf';
@@ -210,53 +210,83 @@ export function parseCookies(header: string | undefined): Record<string, string>
   return cookies;
 }
 
+type ExtendedCookieOptions = CookieOptions & { partitioned?: boolean };
+
 function isHttpsRequest(req: Request): boolean {
   if (req.secure) {
     return true;
   }
+
   const forwardedProto = req.headers['x-forwarded-proto'];
   if (typeof forwardedProto === 'string') {
-    return forwardedProto.split(',')[0]?.trim().toLowerCase() === 'https';
+    const tokens = forwardedProto.split(',').map((token) => token.trim().toLowerCase());
+    if (tokens.includes('https')) {
+      return true;
+    }
+  } else if (Array.isArray(forwardedProto)) {
+    const hasHttps = forwardedProto.some((entry) =>
+      entry
+        .split(',')
+        .map((token) => token.trim().toLowerCase())
+        .includes('https'),
+    );
+    if (hasHttps) {
+      return true;
+    }
   }
+
+  const forwarded = req.headers['forwarded'];
+  if (typeof forwarded === 'string' && /proto=https\b/i.test(forwarded)) {
+    return true;
+  }
+
+  const forwardedSsl = req.headers['x-forwarded-ssl'];
+  if (typeof forwardedSsl === 'string' && forwardedSsl.trim().toLowerCase() === 'on') {
+    return true;
+  }
+
+  const origin = req.headers.origin;
+  if (typeof origin === 'string' && origin.toLowerCase().startsWith('https://')) {
+    return true;
+  }
+
+  const referer = req.headers.referer;
+  if (typeof referer === 'string' && referer.toLowerCase().startsWith('https://')) {
+    return true;
+  }
+
   return false;
 }
 
-export function setAuthCookies(req: Request, res: Response, sessionToken: string, csrfToken: string): void {
+function buildCookieOptions(req: Request, httpOnly: boolean): ExtendedCookieOptions {
   const secure = isHttpsRequest(req);
-  const sameSite = secure ? 'none' : 'lax';
+  const options: ExtendedCookieOptions = {
+    httpOnly,
+    secure,
+    sameSite: secure ? 'none' : 'lax',
+    path: '/',
+  };
+  if (secure) {
+    options.partitioned = true;
+  }
+  return options;
+}
+
+export function setAuthCookies(req: Request, res: Response, sessionToken: string, csrfToken: string): void {
   const maxAgeMs = SESSION_TTL_SECONDS * 1000;
 
   res.cookie(SESSION_COOKIE_NAME, sessionToken, {
-    httpOnly: true,
-    secure,
-    sameSite,
-    path: '/',
+    ...buildCookieOptions(req, true),
     maxAge: maxAgeMs,
   });
 
   res.cookie(CSRF_COOKIE_NAME, csrfToken, {
-    httpOnly: false,
-    secure,
-    sameSite,
-    path: '/',
+    ...buildCookieOptions(req, false),
     maxAge: maxAgeMs,
   });
 }
 
 export function clearAuthCookies(req: Request, res: Response): void {
-  const secure = isHttpsRequest(req);
-  const sameSite = secure ? 'none' : 'lax';
-
-  res.clearCookie(SESSION_COOKIE_NAME, {
-    httpOnly: true,
-    secure,
-    sameSite,
-    path: '/',
-  });
-  res.clearCookie(CSRF_COOKIE_NAME, {
-    httpOnly: false,
-    secure,
-    sameSite,
-    path: '/',
-  });
+  res.clearCookie(SESSION_COOKIE_NAME, buildCookieOptions(req, true));
+  res.clearCookie(CSRF_COOKIE_NAME, buildCookieOptions(req, false));
 }

@@ -135,3 +135,22 @@ export async function apiPatch<T>(
 
   return parseJsonResponse<T>(response);
 }
+
+export async function apiDelete<T>(path: string, signal?: AbortSignal): Promise<T> {
+  const headers: Record<string, string> = {
+    Accept: 'application/json',
+  };
+  const csrf = getActiveCsrfToken();
+  if (csrf) {
+    headers['X-CSRF-Token'] = csrf;
+  }
+
+  const response = await fetch(path, {
+    method: 'DELETE',
+    credentials: 'include',
+    headers,
+    signal,
+  });
+
+  return parseJsonResponse<T>(response);
+}

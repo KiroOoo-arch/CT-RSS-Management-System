@@ -1,0 +1,1195 @@
+# CT-RSS MANAGEMENT SYSTEM — FULL FUNCTIONAL TESTING, BUG FIXING, AND END-TO-END VALIDATION
+
+## PROJECT
+
+CT-RSS Management System (CT-RSS)
+
+Institution: Lapu-Lapu City College — College of Technology
+
+This is an existing system. Do not rebuild it from scratch. Work with the existing architecture, source code, database, API, UI, authentication, roles, and previously implemented modules.
+
+## PRIMARY OBJECTIVE
+
+Perform a complete functional audit and testing of the entire CT-RSS Management System.
+
+This is NOT just a code review, TypeScript check, lint, build, or endpoint status check.
+
+I want you to ACTUALLY TEST THE FEATURES, identify unfinished functionality, find bugs, repair them, and retest the repaired features.
+
+Some pages and features appear to be implemented but are not functioning correctly. For example:
+
+- Task Category dropdown displays only "Select category".
+- No actual categories appear as selectable options.
+- Some buttons, dropdowns, or pages may be incomplete or nonfunctional.
+- Student-side features may not have been tested.
+- Some features may display data but fail to save it.
+- Some pages may be placeholders disguised as functional pages.
+
+Your job is to determine what is genuinely working, what is broken, what is incomplete, and what is missing, and then FIX the issues you can safely fix.
+
+---
+
+# 1. IMPORTANT RULES
+
+1. Inspect the actual source code before making assumptions.
+2. Do not rebuild or redesign the entire application unnecessarily.
+3. Preserve the current architecture, coding conventions, existing working features, and UI design.
+4. Do not change the approved database schema.
+5. The database must remain exactly 28 tables.
+6. Do not create additional tables, columns, or database migrations.
+7. Do not insert fake student, coordinator, attendance, application, accomplishment, or report records into the production database.
+8. If test data is necessary, use a separate isolated test database or safe test environment.
+9. Never delete, overwrite, or damage existing real data.
+10. Never reset, truncate, drop, or wipe the database.
+11. Never expose passwords, API keys, database credentials, session secrets, or other environment secrets in your report.
+12. Never weaken authentication, RBAC, CSRF, session security, or authorization to make tests pass.
+13. Do not remove validation just to make a form submit.
+14. Do not hide broken functionality behind success messages.
+15. Do not use mock data to make a feature appear functional when it is supposed to use the database.
+16. Do not mark a feature PASS if you only inspected its source code.
+17. Do not mark a feature PASS if you only received an HTTP 200 response.
+18. Do not mark a feature PASS if it only works with hardcoded or mock data.
+19. When a feature cannot be tested because required real records or test accounts are missing, explicitly mark it BLOCKED and explain why.
+20. When you find a bug, fix it whenever safe and within the existing system architecture, then rerun the test that failed.
+
+---
+
+# 2. TEST THE ACTUAL APPLICATION
+
+Run the application in the available environment.
+
+Use the actual frontend UI and backend APIs.
+
+Perform real interaction tests wherever possible:
+
+- Open pages.
+- Navigate between pages.
+- Click buttons.
+- Open dropdowns.
+- Select options.
+- Submit forms.
+- Edit records.
+- Delete records when safe in the test environment.
+- Apply search and filters.
+- Change pagination.
+- Reload pages.
+- Verify that data persists.
+- Test empty states.
+- Test validation errors.
+- Test success and failure responses.
+- Test role restrictions.
+- Test the Student experience.
+
+Do not limit yourself to source-code inspection.
+
+If browser automation or interactive browser access is available, use it to test actual user interactions.
+
+If interactive browser testing is unavailable, perform the maximum possible API and integration tests and clearly state which UI tests could not be executed.
+
+---
+
+# 3. INVESTIGATE AND FIX THE TASK CATEGORY DROPDOWN
+
+This is a confirmed problem that must be investigated.
+
+Current behavior:
+
+The Task Category field shows:
+
+"Select category"
+
+But no actual category options appear to be available.
+
+Investigate the entire flow:
+
+Frontend:
+- Task creation form
+- Task editing form
+- Task Category dropdown
+- Category loading logic
+- React state
+- API client
+- Loading state
+- Empty state
+- Error state
+
+Backend:
+- Task category routes
+- Controller
+- Service
+- SQL queries
+- API response format
+- Authentication and Coordinator authorization
+
+Database:
+- Existing task_categories records
+- Category active/status fields
+- College scoping, if applicable
+- Existing category data
+
+Test the following:
+
+1. Can the frontend retrieve the categories from the backend?
+2. Does the categories endpoint return the correct records?
+3. Is the endpoint protected by the correct authentication and authorization?
+4. Does the frontend use the correct API endpoint?
+5. Is the API response format compatible with the dropdown?
+6. Are categories accidentally filtered out?
+7. Is the dropdown incorrectly using hardcoded data?
+8. Is a loading state preventing the options from appearing?
+9. Is an error silently swallowed?
+10. Are existing categories inactive or incorrectly marked?
+11. Can the Coordinator create a category?
+12. After creating a category, does it immediately appear in the dropdown?
+13. Can the Coordinator edit a category?
+14. Can the Coordinator deactivate a category?
+15. Does deactivation appropriately affect existing tasks?
+16. Can a task be created using a valid category?
+17. Does the saved task retain the correct category after refresh?
+18. Does editing a task display its current category correctly?
+
+FIX THE PROBLEM.
+
+If the database contains zero categories, implement a proper empty-state message and a usable way for the Coordinator to create categories, rather than presenting a broken dropdown.
+
+Do not automatically insert arbitrary categories into the production database.
+
+The category management feature and task category selection must work together.
+
+---
+
+# 4. COORDINATOR MODULE — COMPLETE FUNCTIONAL TESTING
+
+Test all Coordinator pages and features.
+
+## A. Authentication and Account
+
+- Coordinator login
+- Correct password
+- Incorrect password
+- Logout
+- Session persistence
+- Refresh while logged in
+- Direct URL navigation
+- Unauthorized access
+- Profile page
+- Profile editing, if implemented
+- Account status
+- Session expiration handling
+
+Verify that login does not merely redirect to the dashboard without a valid authenticated session.
+
+## B. Academic Years
+
+Test:
+
+- Academic year list
+- Search and filters
+- Create academic year
+- Edit academic year
+- Date validation
+- Duplicate academic year prevention
+- Set current academic year
+- Current year display
+- Persistence after refresh
+- Empty states
+- Error messages
+
+Ensure there cannot be multiple current academic years if the system is designed to allow only one.
+
+## C. Programs
+
+Test:
+
+- Program list
+- Create program
+- Edit program
+- Program code validation
+- Duplicate program prevention
+- Status changes
+- Academic year relationships if applicable
+- Student assignment relationships
+- Persistence after refresh
+
+## D. Sections
+
+Test:
+
+- Section list
+- Create section
+- Edit section
+- Correct program association
+- Correct year-level association
+- Duplicate section validation
+- Search and filtering
+- Status
+- Persistence
+
+## E. Students
+
+Test:
+
+- Student list
+- Search
+- Filtering
+- Pagination
+- Create student
+- Student ID validation
+- Duplicate student ID prevention
+- Program assignment
+- Year-level assignment
+- Section assignment
+- Edit student
+- Student status
+- Student profile
+- Student section history
+- Student transfer
+- Transfer history
+- Current section consistency
+- Persistence after refresh
+
+Verify that transferring a student does not destroy previous section history.
+
+## F. Task Categories
+
+Test:
+
+- Category list
+- Create category
+- Edit category
+- Deactivate/reactivate if supported
+- Duplicate validation
+- Dropdown loading
+- Category selection
+- Category assignment to tasks
+- Persistence
+
+## G. RSS Tasks
+
+Test:
+
+- Task list
+- Search
+- Status filtering
+- Pagination
+- Create task
+- Edit task
+- Task title
+- Description
+- Category
+- Task eligibility
+- Targeting all students
+- Targeting specific sections
+- Targeting selected students
+- Application capacity
+- Application deadline
+- Task publication
+- Draft status
+- Published status
+- Closed status
+- Cancelled status, if implemented
+- Task details
+- Task sessions
+- Edit task sessions
+- Delete task sessions, when safe
+- Session dates
+- Start and end times
+- Invalid dates
+- Overlapping sessions
+- Session deletion protection when attendance already exists
+- Task persistence
+
+Test every field individually.
+
+Do not assume the task form works simply because the task can be saved.
+
+## H. Applications
+
+Test:
+
+- Applications queue
+- List and pagination
+- Search
+- Filtering by task
+- Filtering by section
+- Filtering by student
+- Filtering by status
+- Application details
+- Approve application
+- Reject application
+- Withdraw application
+- Cancel application
+- Review history
+- Duplicate applications
+- Capacity validation
+- Concurrent capacity behavior
+- Status transitions
+- Persistence after refresh
+
+Verify that a Coordinator cannot approve more applications than a task's capacity permits.
+
+## I. Attendance
+
+Test:
+
+- Attendance roster
+- Eligible approved applications
+- Sessions
+- Present status
+- Absent status
+- Check-in
+- Check-out
+- Hours calculations
+- Duplicate attendance prevention
+- Attendance verification
+- Attendance correction
+- Attendance rejection
+- Attendance records after refresh
+
+Test invalid attendance:
+
+- Check-out before check-in
+- Invalid session
+- Duplicate record
+- Excessive hours
+- Invalid time ranges
+- Attendance for a non-approved application
+
+Verify that attendance data cannot be manipulated by unauthorized users.
+
+## J. Service Hours
+
+Test:
+
+- Student service-hours totals
+- Verified attendance hours
+- Pending attendance hours
+- Approved adjustments
+- Pending adjustments
+- Rejected adjustments
+- Adjustment history
+- Coordinator adjustment
+- Student adjustment request
+- Positive adjustment
+- Negative adjustment
+- Validation against negative totals
+- Correct total calculations
+- No double counting
+
+Verify that unverified attendance does not contribute to officially verified service hours.
+
+## K. Accomplishments
+
+Test:
+
+- Accomplishment list
+- Student submissions
+- Draft
+- Submission
+- Version history
+- Review
+- Approve
+- Request revision
+- Reject
+- Resubmission
+- Reviewer remarks
+- Ownership checks
+- Persistence
+
+Verify that editing and resubmitting an accomplishment does not improperly overwrite its previous submitted versions.
+
+## L. Evidence Images
+
+Test:
+
+- Upload image
+- Upload multiple images
+- Image categories
+- Before
+- During
+- After
+- Other
+- File size limit
+- File type validation
+- MIME type
+- Actual file signatures
+- Invalid images
+- Unauthorized image access
+- Image display
+- Image download or streaming
+- Evidence associated with correct accomplishment
+- Persistence after application restart, if possible
+
+Test path traversal attempts and unsafe filenames.
+
+Do not disable security validation to make uploads work.
+
+## M. Individual RSS Reports
+
+Test:
+
+- Generate individual report
+- Correct student data
+- Correct attendance totals
+- Correct service hours
+- Correct accomplishment data
+- Report preview
+- PDF generation
+- PDF download
+- PDF file integrity
+- Stored report
+- Report status
+- Approval
+- Archiving, if implemented
+- Reopening or downloading previously generated reports
+
+Ensure the report belongs to the correct student and does not contain another student's records.
+
+## N. Section RSS Reports
+
+Test:
+
+- Section report generation
+- Correct section data
+- Correct student list
+- Correct section totals
+- Section comparisons
+- Report filters
+- PDF generation
+- PDF preview
+- Download
+- Data integrity
+- Access control
+
+Ensure a report for one section does not include another section's private data.
+
+## O. Report Templates
+
+Test:
+
+- Template list
+- Create template
+- Edit template
+- Template validation
+- Template configuration
+- Preview
+- Generate report from template
+- Invalid template configuration
+- Saving template
+- Persistence after refresh
+
+Test malformed configuration safely.
+
+## P. Notifications
+
+Test:
+
+- Notification list
+- Unread count
+- Read notification
+- Mark all as read
+- Notification links
+- Correct recipient
+- Notification generation
+- Notification persistence
+- Refresh behavior
+- Unauthorized access
+
+Ensure students cannot see another student's notifications.
+
+## Q. Audit Logs
+
+Test:
+
+- Audit log list
+- Filters
+- Search
+- Pagination
+- Action details
+- Old/new values where appropriate
+- Sensitive field redaction
+- Authorization
+- Log creation after important operations
+
+Test whether existing audit entries can be modified or deleted through API routes or other application actions.
+
+Do not claim logs are immutable unless this is actually enforced.
+
+---
+
+# 5. STUDENT SIDE — FULL FUNCTIONAL TESTING
+
+The Student side is a major priority.
+
+Do not assume the Student portal works because the Coordinator side works.
+
+Test every student-facing page and feature.
+
+## A. Student Authentication
+
+Test:
+
+- Student login
+- Invalid credentials
+- Correct credentials
+- Session persistence
+- Logout
+- Refresh
+- Unauthorized pages
+- Profile access
+- Direct URL navigation
+
+## B. Student Dashboard
+
+Test:
+
+- Dashboard loads
+- Correct student identity
+- Correct current section
+- Correct program
+- Correct year level
+- Available tasks
+- Application status
+- Attendance summary
+- Verified service hours
+- Pending requests
+- Accomplishment status
+- Notifications
+
+Verify dashboard data is from the logged-in student, not hardcoded or shared.
+
+## C. Available Tasks
+
+Test:
+
+- Available task list
+- Task details
+- Search
+- Filters
+- Pagination, if implemented
+- Published tasks
+- Draft tasks are not visible
+- Closed tasks
+- Deadline handling
+- Section-targeted tasks
+- Student-targeted tasks
+- All-student tasks
+- Eligibility
+
+Verify the student only sees tasks they are actually eligible to view or apply for.
+
+## D. Applying for a Task
+
+Test:
+
+- Apply
+- Application confirmation
+- Duplicate application
+- Application capacity
+- Deadline
+- Eligibility
+- Application status
+- Application history
+- Withdrawal
+- Reapplication after withdrawal, if supported
+- Persistence after refresh
+
+Verify that the frontend cannot bypass backend eligibility rules.
+
+## E. Student Application Tracking
+
+Test:
+
+- Pending
+- Approved
+- Rejected
+- Withdrawn
+- Cancelled
+- Review details
+- Status updates
+- Correct task relationship
+
+Verify that students cannot modify their application status to approved.
+
+## F. Student Attendance
+
+Test:
+
+- Attendance history
+- Session information
+- Attendance status
+- Present
+- Absent
+- Check-in/out information, if exposed
+- Recorded hours
+- Verified hours
+- Refresh and persistence
+
+Students must not be able to create, modify, or verify official attendance records unless the existing approved design explicitly grants that action.
+
+## G. Student Service Hours
+
+Test:
+
+- Total verified hours
+- Per-task hours
+- Per-session hours
+- Pending hours
+- Adjustment requests
+- Adjustment history
+- Submit adjustment request
+- Validation
+- Negative requests
+- Duplicate requests
+- Status updates
+
+Verify the displayed total is consistent with backend calculations.
+
+## H. Student Accomplishments
+
+Test:
+
+- View accomplishments
+- Create draft
+- Edit draft
+- Submit accomplishment
+- Add narrative
+- Upload evidence
+- Categorize evidence
+- Submission version
+- View submission status
+- Coordinator remarks
+- Revision requested
+- Resubmit
+- Approved
+- Rejected
+
+Verify that a student cannot access or modify another student's accomplishments.
+
+## I. Student Evidence
+
+Test:
+
+- Upload
+- Display
+- Remove, if permitted
+- Category
+- File validation
+- Size validation
+- Ownership
+- Refresh persistence
+- Unauthorized access
+
+## J. Student Individual Reports
+
+Test:
+
+- View available reports
+- Individual RSS report
+- Report preview
+- Download PDF
+- Report ownership
+- Correct data
+- Report history
+- Unauthorized report access
+
+Verify that students cannot access another student's individual report by changing an ID in the URL or API request.
+
+## K. Student Notifications
+
+Test:
+
+- Notifications page
+- Unread count
+- Read notification
+- Mark all read
+- Links to relevant workflows
+- Correct recipient
+- Refresh
+- Persistence
+
+## L. Student Profile
+
+Test:
+
+- Profile display
+- Student identity
+- Student ID
+- Program
+- Year level
+- Current section
+- Account status
+- Profile editing, if implemented
+
+Verify students cannot change restricted academic information or their role.
+
+---
+
+# 6. SECTION REPRESENTATIVE TESTING
+
+Test the Section Representative role separately.
+
+Verify:
+
+- Section Representative login
+- Dashboard
+- Assigned section
+- Section overview
+- Published tasks
+- Section reports
+- Task visibility
+- Student information restrictions
+- No Coordinator approval controls
+- No student private records beyond authorized scope
+- No access to other sections
+
+Test ID manipulation:
+
+Try changing section IDs in URLs and API requests.
+
+A Section Representative must not be able to access another section's data by changing an ID or request parameter.
+
+Test an unassigned Section Representative.
+
+An unassigned representative should receive a proper unassigned state and must not gain access to arbitrary section data.
+
+---
+
+# 7. FRONTEND INTERACTION AUDIT
+
+Inspect every page and systematically test the actual UI.
+
+Check for:
+
+- Dropdowns with no options
+- Buttons that do nothing
+- Forms that cannot submit
+- Forms that submit but do not save
+- Placeholder pages
+- Empty pages
+- Broken links
+- Incorrect redirects
+- Missing loading indicators
+- Infinite loading
+- Silent errors
+- Missing success messages
+- Missing error messages
+- Invalid data shown
+- Stale data after mutations
+- Data that disappears after refresh
+- Search that doesn't work
+- Filters that don't work
+- Pagination that doesn't work
+- Edit forms that don't load the current record
+- Delete buttons that don't work
+- Modal dialogs that cannot close
+- UI actions that are not connected to backend endpoints
+- Incorrect role-based navigation
+- Mobile layout problems
+- Overflowing tables
+- Form validation issues
+
+Every visible interactive control must either work correctly or be clearly identified as intentionally unavailable.
+
+---
+
+# 8. API AND BACKEND INTEGRATION TESTING
+
+Test every existing frontend API call against its backend route.
+
+Verify:
+
+- Correct endpoint
+- Correct HTTP method
+- Correct request body
+- Correct response structure
+- Correct status code
+- Authentication
+- Authorization
+- Input validation
+- SQL parameterization
+- Error handling
+- Transaction integrity
+- Persistence
+
+Check for:
+
+- Missing backend routes
+- Unimplemented endpoints
+- Incorrect controller logic
+- Incorrect service logic
+- Incorrect SQL queries
+- Schema mismatches
+- Incorrect field names
+- Frontend/backend response mismatch
+- Swallowed errors
+- Incorrect status codes
+- Incomplete error handling
+
+Use the existing API conventions.
+
+Do not create duplicate API endpoints unnecessarily.
+
+---
+
+# 9. SECURITY AND DATA INTEGRITY TESTING
+
+Test the following without damaging data:
+
+- Unauthorized access
+- Role bypass
+- ID manipulation
+- Student ownership validation
+- Section scoping
+- Coordinator restrictions
+- Section Representative restrictions
+- CSRF protection
+- Session cookie behavior
+- Authentication persistence
+- Input validation
+- SQL injection resistance
+- XSS handling
+- File upload validation
+- Path traversal
+- Sensitive information exposure
+- Audit logging
+- Duplicate records
+- Concurrent applications
+- Task capacity
+- Duplicate attendance
+- Service hour calculation integrity
+
+Use safe test payloads and non-destructive test methods.
+
+Do not weaken security controls to make a test pass.
+
+---
+
+# 10. DATABASE AND PERSISTENCE TESTING
+
+The existing approved database schema consists of exactly 28 tables.
+
+Do not modify the schema.
+
+Verify:
+
+- All expected tables exist
+- Application queries match the schema
+- Relationships are correctly handled
+- Data is saved
+- Data can be retrieved
+- Editing persists
+- Transactions are used where necessary
+- Rollbacks work where applicable
+- No unintended duplicate records
+- No accidental records are created during tests
+- No existing records are modified or deleted by tests
+
+Check the following persistence scenarios:
+
+1. Create or modify a record in an isolated test environment.
+2. Verify the API returns the saved record.
+3. Refresh the UI.
+4. Verify the record is still present.
+5. Verify related data is consistent.
+6. Verify no duplicate records were created.
+7. Verify the test data can be safely cleaned up in the isolated test environment.
+
+If only the real production database is available, do not perform destructive tests. Use read-only checks and clearly identify blocked tests.
+
+---
+
+# 11. TEST ENVIRONMENT AND TEST DATA
+
+The existing database currently may not have student records, tasks, applications, attendance, accomplishments, or reports.
+
+Do not mistake empty database tables for working features.
+
+Where test data is necessary:
+
+Preferred approach:
+
+- Use a separate isolated test database.
+- Use test-only accounts for Coordinator, Student, and Section Representative.
+- Create test programs, sections, students, tasks, applications, attendance, accomplishments, and reports only in the isolated test database.
+- Perform complete workflows.
+- Clean up only the test database after testing.
+
+If an isolated database is unavailable:
+
+- Do not insert fake data into the production database.
+- Do not delete or modify existing real data.
+- Test all components that can be safely tested.
+- Report the remaining tests as BLOCKED by missing test data or environment.
+
+Never assume the presence of a student account.
+
+---
+
+# 12. AUTOMATED TESTING
+
+Inspect the existing testing infrastructure.
+
+Add or improve automated tests where appropriate and compatible with the current architecture.
+
+Prioritize:
+
+- API integration tests
+- Service logic tests
+- Validation tests
+- Authorization tests
+- Database interaction tests
+- Critical workflow tests
+- Regression tests for bugs discovered during this task
+
+Do not introduce an unnecessarily large testing framework if a suitable existing setup is already available.
+
+If adding tests, ensure they are repeatable and do not require real production data.
+
+---
+
+# 13. BUG FIXING REQUIREMENTS
+
+When you find a problem:
+
+1. Identify the actual root cause.
+2. Do not make superficial UI-only changes if the real problem is in the backend.
+3. Fix the underlying issue.
+4. Preserve existing working functionality.
+5. Add a regression test where practical.
+6. Rerun the failing test.
+7. Rerun related tests to ensure the fix did not break other modules.
+
+Examples:
+
+If a dropdown is empty:
+- Do not simply hardcode options.
+- Verify the database.
+- Verify the API.
+- Verify frontend loading.
+- Fix the correct layer.
+
+If a form submits but the record is not saved:
+- Investigate frontend request.
+- Investigate backend validation.
+- Investigate SQL.
+- Investigate transaction behavior.
+- Investigate the actual saved record.
+
+If a Student page is broken:
+- Test its API and UI.
+- Fix the real problem.
+- Verify student-specific permissions.
+
+If a feature is only a placeholder:
+- Determine whether the feature was supposed to be implemented.
+- Implement it using the existing architecture if its scope is already part of CT-RSS.
+- Do not replace it with a fake working demo.
+
+---
+
+# 14. REGRESSION TESTING
+
+After implementing bug fixes, rerun the full relevant testing suite.
+
+Required checks where supported:
+
+- TypeScript
+- Lint
+- Production build
+- Database schema test
+- API tests
+- Authentication tests
+- Authorization tests
+- Frontend interaction tests
+- Coordinator workflow tests
+- Student workflow tests
+- Section Representative workflow tests
+- Security tests
+- Persistence tests
+
+Ensure previously implemented modules still work after changes.
+
+Do not stop after fixing the first bug.
+
+Continue testing until all modules have been reviewed and all safely fixable issues have been addressed.
+
+---
+
+# 15. FINAL REPORT FORMAT
+
+When you finish, provide a detailed report using the following format.
+
+## A. Overall Result
+
+State whether the system is:
+
+- FUNCTIONALLY VERIFIED
+- PARTIALLY FUNCTIONAL
+- NOT READY
+
+Do not claim fully verified if critical user workflows were not tested.
+
+## B. Feature Testing Matrix
+
+Use this table:
+
+| Module / Feature | Test Performed | Result | Issue Found | Fix Applied | Retest Result |
+|---|---|---|---|---|
+
+Include all Coordinator, Student, and Section Representative modules.
+
+Use only these test statuses:
+
+- PASS — actually tested and working
+- FAIL — tested and broken
+- FIXED — issue repaired
+- BLOCKED — could not be tested
+- NOT TESTED — test was not performed
+
+## C. Confirmed Bugs
+
+For each bug:
+
+- Bug title
+- Affected page
+- Steps to reproduce
+- Root cause
+- Fix applied
+- Files changed
+- Retest results
+
+## D. Student-Side Testing Report
+
+Provide a separate detailed report for:
+
+- Login
+- Dashboard
+- Tasks
+- Applications
+- Attendance
+- Service hours
+- Accomplishments
+- Evidence
+- Reports
+- Notifications
+- Profile
+
+Explicitly state which features were actually tested through a Student account and which were not.
+
+## E. Coordinator Testing Report
+
+Provide a separate detailed report for all Coordinator pages and workflows.
+
+## F. Section Representative Testing Report
+
+Provide a separate detailed report for all Section Representative features, including authorization and section-scoping tests.
+
+## G. Security Test Results
+
+Document the actual results of:
+
+- Authentication
+- Authorization
+- ID manipulation
+- CSRF
+- Ownership
+- Section isolation
+- File uploads
+- SQL injection safety
+- Audit logs
+
+Do not expose secrets.
+
+## H. Database and Data Integrity
+
+Report:
+
+- Table count
+- Confirmation that schema remains unchanged
+- Existing data preservation
+- Any test data created
+- Whether test data was cleaned up
+- Persistence results
+- Database test results
+
+## I. Files Changed
+
+List:
+
+- New files
+- Modified files
+- Deleted files
+
+Explain why each change was made.
+
+Do not delete lockfiles, configuration files, or other important files without a valid reason.
+
+## J. Remaining Issues
+
+List all:
+
+- Unresolved bugs
+- Incomplete features
+- Blocked tests
+- Missing test accounts
+- Missing environment capabilities
+- Deployment concerns
+
+Do not hide or downgrade unresolved problems.
+
+## K. Final Verification
+
+Run the final:
+
+- Lint
+- Build
+- Database test
+- Regression test suite
+
+Include the real output/results.
+
+## L. Final Recommendation
+
+Answer these questions directly:
+
+1. Can the Coordinator use the system successfully?
+2. Can a Student use the system successfully?
+3. Can a Section Representative use the system successfully?
+4. Are all implemented buttons and forms working?
+5. Are all dropdowns loading real data?
+6. Do create/edit operations persist?
+7. Are all application workflows functional?
+8. Are attendance and service-hour calculations correct?
+9. Are accomplishment submissions and evidence uploads working?
+10. Are individual and section reports generating and downloading correctly?
+11. Are notifications working?
+12. Is the system safe from unauthorized access based on the tests performed?
+13. Is the system ready to proceed to local VS Code testing and integration?
+14. What still needs to be done before deployment?
+
+---
+
+# FINAL INSTRUCTION
+
+Do not just give me a list of bugs.
+
+**INSPECT → TEST → FIND THE ROOT CAUSE → FIX → RETEST → REGRESSION TEST → REPORT.**
+
+The Task Category dropdown issue is a known example of a feature that appears implemented but is not working properly.
+
+Find similar issues across the entire system.
+
+Test the Coordinator side, Student side, and Section Representative side.
+
+Fix all issues you can safely fix within the existing system and architecture.
+
+Do not claim successful testing without actual test evidence.
+
+Do not change the approved database schema.
+
+Do not insert fake data into the real database.
+
+Do not stop at a successful build.
+
+The objective is to make CT-RSS genuinely functional, not merely compile successfully.

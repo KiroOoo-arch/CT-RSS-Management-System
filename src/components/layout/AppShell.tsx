@@ -12,6 +12,7 @@ interface AppShellProps {
   activePageId: string;
   pageTitle: string;
   signingOut: boolean;
+  notificationRefreshKey?: number;
   onSelectPage: (pageId: string) => void;
   onSignOut: () => void;
   onChangeDevRole?: (role: RoleName) => void;
@@ -25,6 +26,7 @@ export function AppShell({
   activePageId,
   pageTitle,
   signingOut,
+  notificationRefreshKey = 0,
   onSelectPage,
   onSignOut,
   onChangeDevRole,
@@ -50,6 +52,7 @@ export function AppShell({
           role={role}
           pageTitle={pageTitle}
           signingOut={signingOut}
+          notificationRefreshKey={notificationRefreshKey}
           onOpenMobileMenu={() => setMobileOpen(true)}
           onSignOut={onSignOut}
           onChangeDevRole={onChangeDevRole}
