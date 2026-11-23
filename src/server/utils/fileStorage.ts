@@ -134,7 +134,15 @@ export async function saveEvidenceImageBase64(input: {
   const safeFilename = `${crypto.randomUUID()}.${verifiedMeta.ext}`;
   const relativeStoragePath = path.join(subdir, safeFilename);
   const absFilePath = resolveSafeStoragePath(relativeStoragePath);
-  await fs.writeFile(absFilePath, buffer);
+  const tempFilePath = `${absFilePath}.${crypto.randomUUID()}.tmp`;
+
+  try {
+    await fs.writeFile(tempFilePath, buffer);
+    await fs.rename(tempFilePath, absFilePath);
+  } catch (err) {
+    await fs.unlink(tempFilePath).catch(() => undefined);
+    throw err;
+  }
 
   return {
     storagePath: relativeStoragePath.replace(/\\/g, '/'),
@@ -142,6 +150,27 @@ export async function saveEvidenceImageBase64(input: {
     fileSize: buffer.length,
     originalFilename: sanitizeOriginalFilename(input.originalFilename),
   };
+}
+
+export async function deleteEvidenceFile(relativeStoragePath: string): Promise<void> {
+  try {
+    const absPath = resolveSafeStoragePath(relativeStoragePath);
+    await fs.unlink(absPath);
+  } catch (err) {
+    const code = (err as { code?: string })?.code;
+    if (code !== 'ENOENT') {
+      throw err;
+    }
+  }
+}
+
+export async function removeEvidenceDirectoryIfEmpty(relativeDirectory: string): Promise<void> {
+  try {
+    const absPath = resolveSafeStoragePath(relativeDirectory);
+    await fs.rmdir(absPath);
+  } catch {
+    // Ignore missing or non-empty directories.
+  }
 }
 
 export async function readStoredFileBuffer(relativeStoragePath: string): Promise<Buffer> {

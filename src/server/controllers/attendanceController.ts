@@ -12,17 +12,10 @@ import {
   verifyOrCorrectAttendance,
 } from '../services/attendanceService.ts';
 import type { ApiSuccessResponse, AttendanceVerificationStatus } from '../types/api.ts';
+import { parseOptionalIntParam, parseStrictIntParam } from '../utils/apiValidation.ts';
 
 function extractIp(req: AuthenticatedRequest): string | null {
   return req.ip ?? req.socket.remoteAddress ?? null;
-}
-
-function parseOptionalInt(raw: unknown): number | undefined {
-  if (typeof raw !== 'string' || !raw.trim()) {
-    return undefined;
-  }
-  const n = Number.parseInt(raw, 10);
-  return Number.isFinite(n) ? n : undefined;
 }
 
 export async function getCoordinatorAttendanceList(
@@ -30,9 +23,9 @@ export async function getCoordinatorAttendanceList(
   res: Response,
 ): Promise<void> {
   const records = await listCoordinatorAttendance({
-    taskId: parseOptionalInt(req.query.taskId),
-    taskSessionId: parseOptionalInt(req.query.taskSessionId),
-    studentId: parseOptionalInt(req.query.studentId),
+    taskId: parseOptionalIntParam(req.query.taskId, 'INVALID_TASK_ID', 'task identifier'),
+    taskSessionId: parseOptionalIntParam(req.query.taskSessionId, 'INVALID_TASK_SESSION_ID', 'task session identifier'),
+    studentId: parseOptionalIntParam(req.query.studentId, 'INVALID_STUDENT_ID', 'student identifier'),
     verificationStatus:
       typeof req.query.verificationStatus === 'string' ? req.query.verificationStatus : undefined,
     search: typeof req.query.search === 'string' ? req.query.search : undefined,
@@ -50,7 +43,7 @@ export async function getCoordinatorSessionRosterHandler(
   req: AuthenticatedRequest,
   res: Response,
 ): Promise<void> {
-  const sessionId = Number.parseInt(req.params.sessionId ?? '', 10);
+  const sessionId = parseStrictIntParam(req.params.sessionId, 'INVALID_TASK_SESSION_ID', 'task session identifier');
   const roster = await getCoordinatorSessionRoster(sessionId);
 
   const payload: ApiSuccessResponse<typeof roster> = {
@@ -113,7 +106,7 @@ export async function patchCoordinatorAttendance(
   if (!req.authUser) {
     throw new AppError(401, 'UNAUTHENTICATED', 'Authentication required.');
   }
-  const attendanceId = Number.parseInt(req.params.attendanceId ?? '', 10);
+  const attendanceId = parseStrictIntParam(req.params.attendanceId, 'INVALID_ATTENDANCE_ID', 'attendance identifier');
   const body = (req.body ?? {}) as {
     verificationStatus?: unknown;
     verifiedHours?: unknown;
@@ -182,9 +175,9 @@ export async function getCoordinatorServiceHoursHandler(
   res: Response,
 ): Promise<void> {
   const summary = await getServiceHoursSummary({
-    studentId: parseOptionalInt(req.query.studentId),
-    academicYearId: parseOptionalInt(req.query.academicYearId),
-    taskId: parseOptionalInt(req.query.taskId),
+    studentId: parseOptionalIntParam(req.query.studentId, 'INVALID_STUDENT_ID', 'student identifier'),
+    academicYearId: parseOptionalIntParam(req.query.academicYearId, 'INVALID_ACADEMIC_YEAR_ID', 'academic year identifier'),
+    taskId: parseOptionalIntParam(req.query.taskId, 'INVALID_TASK_ID', 'task identifier'),
     search: typeof req.query.search === 'string' ? req.query.search : undefined,
   });
 
@@ -205,8 +198,8 @@ export async function getStudentServiceHoursHandler(
   }
   const summary = await getServiceHoursSummary({
     studentId: req.authUser.student.id,
-    academicYearId: parseOptionalInt(req.query.academicYearId),
-    taskId: parseOptionalInt(req.query.taskId),
+    academicYearId: parseOptionalIntParam(req.query.academicYearId, 'INVALID_ACADEMIC_YEAR_ID', 'academic year identifier'),
+    taskId: parseOptionalIntParam(req.query.taskId, 'INVALID_TASK_ID', 'task identifier'),
   });
 
   const payload: ApiSuccessResponse<typeof summary> = {
@@ -290,7 +283,7 @@ export async function postCoordinatorAdjustmentDecision(
   if (!req.authUser) {
     throw new AppError(401, 'UNAUTHENTICATED', 'Authentication required.');
   }
-  const adjustmentId = Number.parseInt(req.params.adjustmentId ?? '', 10);
+  const adjustmentId = parseStrictIntParam(req.params.adjustmentId, 'INVALID_ADJUSTMENT_ID', 'adjustment identifier');
   const body = (req.body ?? {}) as { decision?: unknown };
   const decision = body.decision === 'approved' || body.decision === 'rejected' ? body.decision : null;
   if (!decision) {

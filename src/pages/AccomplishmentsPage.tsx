@@ -913,6 +913,7 @@ export function AccomplishmentsPage({
                 id="sub-date"
                 type="date"
                 value={activityDate}
+                max={new Date().toISOString().slice(0, 10)}
                 onChange={(e) => setActivityDate(e.target.value)}
               />
             </FormField>

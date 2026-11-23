@@ -17,6 +17,7 @@ import {
   updateSection,
 } from '../services/academicService.ts';
 import type { ApiSuccessResponse } from '../types/api.ts';
+import { parseOptionalIntParam, parseStrictIntParam } from '../utils/apiValidation.ts';
 
 function extractClientIp(req: AuthenticatedRequest): string | null {
   return req.ip ?? req.socket.remoteAddress ?? null;
@@ -88,7 +89,7 @@ export async function patchCoordinatorAcademicYear(
   if (!req.authUser) {
     throw new AppError(401, 'UNAUTHENTICATED', 'Authentication required.');
   }
-  const academicYearId = Number.parseInt(req.params.academicYearId ?? '', 10);
+  const academicYearId = parseStrictIntParam(req.params.academicYearId, 'INVALID_ACADEMIC_YEAR_ID', 'academic year identifier');
   const body = (req.body ?? {}) as Record<string, unknown>;
   const academicYear = await updateAcademicYear({
     academicYearId,
@@ -116,7 +117,7 @@ export async function postCoordinatorSetCurrentAcademicYear(
   if (!req.authUser) {
     throw new AppError(401, 'UNAUTHENTICATED', 'Authentication required.');
   }
-  const academicYearId = Number.parseInt(req.params.academicYearId ?? '', 10);
+  const academicYearId = parseStrictIntParam(req.params.academicYearId, 'INVALID_ACADEMIC_YEAR_ID', 'academic year identifier');
   const academicYear = await setCurrentAcademicYear({
     academicYearId,
     coordinatorUserId: req.authUser.id,
@@ -182,7 +183,7 @@ export async function patchCoordinatorProgram(
   if (!req.authUser) {
     throw new AppError(401, 'UNAUTHENTICATED', 'Authentication required.');
   }
-  const programId = Number.parseInt(req.params.programId ?? '', 10);
+  const programId = parseStrictIntParam(req.params.programId, 'INVALID_PROGRAM_ID', 'program identifier');
   const body = (req.body ?? {}) as Record<string, unknown>;
   const program = await updateProgram({
     programId,
@@ -212,7 +213,10 @@ export async function getCoordinatorSections(
   res: Response,
 ): Promise<void> {
   const ayParam = typeof req.query.academicYearId === 'string' ? req.query.academicYearId.trim() : '';
-  const academicYearId = ayParam ? Number.parseInt(ayParam, 10) : undefined;
+  const academicYearId =
+    ayParam !== ''
+      ? parseOptionalIntParam(req.query.academicYearId, 'INVALID_ACADEMIC_YEAR_ID', 'academic year identifier')
+      : undefined;
   const sections = await listSections(academicYearId);
   const response: ApiSuccessResponse<{ sections: typeof sections }> = {
     success: true,
@@ -255,7 +259,7 @@ export async function patchCoordinatorSection(
   if (!req.authUser) {
     throw new AppError(401, 'UNAUTHENTICATED', 'Authentication required.');
   }
-  const sectionId = Number.parseInt(req.params.sectionId ?? '', 10);
+  const sectionId = parseStrictIntParam(req.params.sectionId, 'INVALID_SECTION_ID', 'section identifier');
   const body = (req.body ?? {}) as Record<string, unknown>;
   const section = await updateSection({
     sectionId,
@@ -280,9 +284,12 @@ export async function getCoordinatorSectionStudents(
   req: AuthenticatedRequest,
   res: Response,
 ): Promise<void> {
-  const sectionId = Number.parseInt(req.params.sectionId ?? '', 10);
+  const sectionId = parseStrictIntParam(req.params.sectionId, 'INVALID_SECTION_ID', 'section identifier');
   const ayParam = typeof req.query.academicYearId === 'string' ? req.query.academicYearId.trim() : '';
-  const academicYearId = ayParam ? Number.parseInt(ayParam, 10) : undefined;
+  const academicYearId =
+    ayParam !== ''
+      ? parseOptionalIntParam(req.query.academicYearId, 'INVALID_ACADEMIC_YEAR_ID', 'academic year identifier')
+      : undefined;
   const result = await listSectionStudents(sectionId, academicYearId);
   const response: ApiSuccessResponse<typeof result> = {
     success: true,

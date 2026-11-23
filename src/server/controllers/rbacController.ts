@@ -9,6 +9,7 @@ import {
   updateAccountStatus,
 } from '../services/rbacService.ts';
 import type { ApiSuccessResponse, RegistrationRecord } from '../types/api.ts';
+import { parseStrictIntParam } from '../utils/apiValidation.ts';
 
 function extractClientIp(req: AuthenticatedRequest): string | null {
   return req.ip ?? req.socket.remoteAddress ?? null;
@@ -37,7 +38,7 @@ export async function postCoordinatorRegistrationDecision(
     throw new AppError(401, 'UNAUTHENTICATED', 'Authentication required.');
   }
 
-  const studentId = Number.parseInt(req.params.studentId ?? '', 10);
+  const studentId = parseStrictIntParam(req.params.studentId, 'INVALID_STUDENT_ID', 'student identifier');
   const body = (req.body ?? {}) as { decision?: unknown; remarks?: unknown };
   const decision = body.decision === 'approved' || body.decision === 'rejected' ? body.decision : null;
 
@@ -70,7 +71,7 @@ export async function postCoordinatorAssignRole(
     throw new AppError(401, 'UNAUTHENTICATED', 'Authentication required.');
   }
 
-  const targetUserId = Number.parseInt(req.params.userId ?? '', 10);
+  const targetUserId = parseStrictIntParam(req.params.userId, 'INVALID_USER_ID', 'user identifier');
   const body = (req.body ?? {}) as { roleName?: unknown };
   const roleName = typeof body.roleName === 'string' ? body.roleName : '';
 
@@ -98,7 +99,7 @@ export async function patchCoordinatorUserStatus(
     throw new AppError(401, 'UNAUTHENTICATED', 'Authentication required.');
   }
 
-  const targetUserId = Number.parseInt(req.params.userId ?? '', 10);
+  const targetUserId = parseStrictIntParam(req.params.userId, 'INVALID_USER_ID', 'user identifier');
   const body = (req.body ?? {}) as { status?: unknown; reason?: unknown };
   const status = typeof body.status === 'string' ? body.status : '';
 
@@ -140,7 +141,7 @@ export async function getStudentProfileScoped(
   req: AuthenticatedRequest,
   res: Response,
 ): Promise<void> {
-  const studentId = Number.parseInt(req.params.studentId ?? '', 10);
+  const studentId = parseStrictIntParam(req.params.studentId, 'INVALID_STUDENT_ID', 'student identifier');
   const profile = await getStudentProfileById(studentId);
   const response: ApiSuccessResponse<typeof profile> = {
     success: true,

@@ -1483,12 +1483,29 @@ export function StudentsPage({ isAuthenticated, onReturnToOverview }: StudentsPa
                 ))}
               </SelectInput>
             </FormField>
-            <FormField id="transfer-date" label="Effective Date" required>
+            <FormField
+              id="transfer-date"
+              label="Effective Date"
+              required
+              hint={
+                transferAcademicYearId
+                  ? (() => {
+                      const selectedAy = academicYears.find(
+                        (ay) => String(ay.id) === transferAcademicYearId,
+                      );
+                      return selectedAy
+                        ? `Must be on or before today and within ${selectedAy.name} (${selectedAy.startDate} to ${selectedAy.endDate}).`
+                        : 'Must be on or before today.';
+                    })()
+                  : 'Must be on or before today.'
+              }
+            >
               <TextInput
                 id="transfer-date"
                 type="date"
                 value={transferEffectiveDate}
                 onChange={(e) => setTransferEffectiveDate(e.target.value)}
+                max={getTodayIso()}
                 required
                 disabled={transferring}
               />
@@ -1545,6 +1562,11 @@ export function StudentsPage({ isAuthenticated, onReturnToOverview }: StudentsPa
             </div>
           ) : null}
 
+          <p className="rounded-lg border border-[#E2E8F0] bg-[#F4F6FA] px-3 py-2 text-xs text-[#475569]">
+            Use <strong>Suspended</strong> for a temporary restriction that can be lifted
+            later; use <strong>Deactivated</strong> to revoke active access. A rejected
+            registration cannot be reactivated here.
+          </p>
           <FormField id="account-status-select" label="Account Status" required>
             <SelectInput
               id="account-status-select"

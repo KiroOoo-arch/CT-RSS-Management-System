@@ -15,24 +15,19 @@ import {
 } from '../services/reportService.ts';
 import { resolveSectionRepAssignedSectionId } from '../services/systemModulesService.ts';
 import type { ApiSuccessResponse, ReportStatus, ReportType } from '../types/api.ts';
+import { parseOptionalIntParam, parseStrictIntParam } from '../utils/apiValidation.ts';
 
 function extractIp(req: AuthenticatedRequest): string | null {
   return req.ip ?? req.socket.remoteAddress ?? null;
-}
-
-function parseOptionalInt(raw: unknown): number | undefined {
-  if (typeof raw !== 'string' || !raw.trim()) {
-    return undefined;
-  }
-  const n = Number.parseInt(raw, 10);
-  return Number.isFinite(n) ? n : undefined;
 }
 
 export async function getCoordinatorReportTemplates(
   req: AuthenticatedRequest,
   res: Response,
 ): Promise<void> {
-  const templates = await listReportTemplates(parseOptionalInt(req.query.collegeId));
+  const templates = await listReportTemplates(
+    parseOptionalIntParam(req.query.collegeId, 'INVALID_COLLEGE_ID', 'college identifier'),
+  );
   const payload: ApiSuccessResponse<{ templates: typeof templates }> = {
     success: true,
     data: { templates },
@@ -82,7 +77,7 @@ export async function patchCoordinatorReportTemplate(
   if (!req.authUser) {
     throw new AppError(401, 'UNAUTHENTICATED', 'Authentication required.');
   }
-  const templateId = Number.parseInt(req.params.templateId ?? '', 10);
+  const templateId = parseStrictIntParam(req.params.templateId, 'INVALID_REPORT_TEMPLATE_ID', 'report template identifier');
   const body = (req.body ?? {}) as {
     templateName?: unknown;
     isActive?: unknown;
@@ -112,21 +107,39 @@ export async function getCoordinatorReportsList(
   res: Response,
 ): Promise<void> {
   const reportTypeRaw = typeof req.query.reportType === 'string' ? req.query.reportType : undefined;
+  if (reportTypeRaw !== undefined && reportTypeRaw !== 'individual' && reportTypeRaw !== 'section') {
+    throw new AppError(400, 'INVALID_REPORT_TYPE', 'Invalid report type filter.');
+  }
   const reportType =
     reportTypeRaw === 'individual' || reportTypeRaw === 'section'
       ? (reportTypeRaw as ReportType)
       : undefined;
 
-  const reports = await listRssReports({
+  const page = parseOptionalIntParam(req.query.page, 'INVALID_PAGE', 'page');
+  const pageSize = parseOptionalIntParam(req.query.pageSize, 'INVALID_PAGE_SIZE', 'page size');
+
+  const result = await listRssReports({
     reportType,
-    studentId: parseOptionalInt(req.query.studentId),
-    sectionId: parseOptionalInt(req.query.sectionId),
-    academicYearId: parseOptionalInt(req.query.academicYearId),
+    studentId: parseOptionalIntParam(req.query.studentId, 'INVALID_STUDENT_ID', 'student identifier'),
+    sectionId: parseOptionalIntParam(req.query.sectionId, 'INVALID_SECTION_ID', 'section identifier'),
+    academicYearId: parseOptionalIntParam(req.query.academicYearId, 'INVALID_ACADEMIC_YEAR_ID', 'academic year identifier'),
+    page: page !== undefined && page > 0 ? page : undefined,
+    pageSize: pageSize !== undefined && pageSize > 0 ? pageSize : undefined,
   });
 
-  const payload: ApiSuccessResponse<{ reports: typeof reports }> = {
+  const payload: ApiSuccessResponse<{
+    reports: typeof result.reports;
+    totalCount: number;
+    page: number;
+    pageSize: number;
+  }> = {
     success: true,
-    data: { reports },
+    data: {
+      reports: result.reports,
+      totalCount: result.totalCount,
+      page: result.page,
+      pageSize: result.pageSize,
+    },
     requestId: req.requestId,
   };
   res.json(payload);
@@ -136,10 +149,10 @@ export async function getCoordinatorIndividualReportPreviewHandler(
   req: AuthenticatedRequest,
   res: Response,
 ): Promise<void> {
-  const studentId = Number.parseInt(String(req.query.studentId ?? ''), 10);
+  const studentId = parseStrictIntParam(req.query.studentId, 'INVALID_STUDENT_ID', 'student identifier');
   const preview = await getIndividualReportPreview({
     studentId,
-    academicYearId: parseOptionalInt(req.query.academicYearId),
+    academicYearId: parseOptionalIntParam(req.query.academicYearId, 'INVALID_ACADEMIC_YEAR_ID', 'academic year identifier'),
     dateFrom: typeof req.query.dateFrom === 'string' ? req.query.dateFrom : undefined,
     dateTo: typeof req.query.dateTo === 'string' ? req.query.dateTo : undefined,
   });
@@ -199,10 +212,10 @@ export async function getCoordinatorSectionReportPreviewHandler(
   req: AuthenticatedRequest,
   res: Response,
 ): Promise<void> {
-  const sectionId = Number.parseInt(String(req.query.sectionId ?? ''), 10);
+  const sectionId = parseStrictIntParam(req.query.sectionId, 'INVALID_SECTION_ID', 'section identifier');
   const preview = await getSectionReportPreview({
     sectionId,
-    academicYearId: parseOptionalInt(req.query.academicYearId),
+    academicYearId: parseOptionalIntParam(req.query.academicYearId, 'INVALID_ACADEMIC_YEAR_ID', 'academic year identifier'),
     dateFrom: typeof req.query.dateFrom === 'string' ? req.query.dateFrom : undefined,
     dateTo: typeof req.query.dateTo === 'string' ? req.query.dateTo : undefined,
     includeComparison: req.query.includeComparison === 'true',
@@ -266,7 +279,7 @@ export async function patchCoordinatorReportStatus(
   if (!req.authUser) {
     throw new AppError(401, 'UNAUTHENTICATED', 'Authentication required.');
   }
-  const reportId = Number.parseInt(req.params.reportId ?? '', 10);
+  const reportId = parseStrictIntParam(req.params.reportId, 'INVALID_REPORT_ID', 'report identifier');
   const body = (req.body ?? {}) as { status?: unknown };
   const status = String(body.status ?? '') as ReportStatus;
 
@@ -293,20 +306,34 @@ export async function getStudentOwnReports(
   if (!req.authUser?.student) {
     throw new AppError(403, 'STUDENT_PROFILE_MISSING', 'An approved student profile is required.');
   }
-  const [reports, preview] = await Promise.all([
+  const [result, preview] = await Promise.all([
     listRssReports({
       reportType: 'individual',
       studentId: req.authUser.student.id,
+      page: parseOptionalIntParam(req.query.page, 'INVALID_PAGE', 'page'),
+      pageSize: parseOptionalIntParam(req.query.pageSize, 'INVALID_PAGE_SIZE', 'page size'),
     }),
     getIndividualReportPreview({
       studentId: req.authUser.student.id,
-      academicYearId: parseOptionalInt(req.query.academicYearId),
+      academicYearId: parseOptionalIntParam(req.query.academicYearId, 'INVALID_ACADEMIC_YEAR_ID', 'academic year identifier'),
     }),
   ]);
 
-  const payload: ApiSuccessResponse<{ reports: typeof reports; preview: typeof preview }> = {
+  const payload: ApiSuccessResponse<{
+    reports: typeof result.reports;
+    totalCount: number;
+    page: number;
+    pageSize: number;
+    preview: typeof preview;
+  }> = {
     success: true,
-    data: { reports, preview },
+    data: {
+      reports: result.reports,
+      totalCount: result.totalCount,
+      page: result.page,
+      pageSize: result.pageSize,
+      preview,
+    },
     requestId: req.requestId,
   };
   res.json(payload);
@@ -319,7 +346,7 @@ export async function getAuthorizedReportDownloadHandler(
   if (!req.authUser) {
     throw new AppError(401, 'UNAUTHENTICATED', 'Authentication required.');
   }
-  const reportId = Number.parseInt(req.params.reportId ?? '', 10);
+  const reportId = parseStrictIntParam(req.params.reportId, 'INVALID_REPORT_ID', 'report identifier');
   const isCoordinator = req.authUser.roles.includes('RSS Coordinator');
   const sectionRepSectionId = req.authUser.roles.includes('Section Representative')
     ? await resolveSectionRepAssignedSectionId(req.authUser.student?.id ?? null)

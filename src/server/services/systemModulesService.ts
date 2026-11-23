@@ -554,10 +554,11 @@ export async function listSectionRepScopedReports(user: AuthenticatedUser): Prom
   if (!overview.assigned || !overview.section) {
     return { assigned: false, sectionLabel: null, reports: [] };
   }
-  const reports = await listRssReports({
+  const reportResult = await listRssReports({
     reportType: 'section',
     sectionId: overview.section.sectionId,
   });
+  const reports = reportResult.reports;
   return {
     assigned: true,
     sectionLabel: `${overview.section.programCode} ${overview.section.yearLevelName} ${overview.section.sectionName}`,

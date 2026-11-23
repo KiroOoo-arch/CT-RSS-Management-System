@@ -204,6 +204,9 @@ export async function listCoordinatorAttendance(input: {
   }
 
   const vStatus = input.verificationStatus?.trim().toLowerCase();
+  if (vStatus && vStatus !== 'all' && vStatus !== 'pending' && vStatus !== 'verified' && vStatus !== 'rejected') {
+    throw new AppError(400, 'INVALID_VERIFICATION_STATUS', 'Invalid attendance verification status filter.');
+  }
   if (vStatus === 'pending' || vStatus === 'verified' || vStatus === 'rejected') {
     params.push(vStatus);
     conditions.push(`att.verification_status = $${params.length}`);

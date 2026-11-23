@@ -11,8 +11,10 @@
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
     "test": "tsx --test tests/functionalRegression.test.ts",
+    "test:safe": "tsx --import ./tests/testSetup.mjs --test tests/attendance.test.ts",
     "db:test": "tsx src/server/db/testConnection.ts",
     "db:migrate": "tsx src/server/db/migrate.ts",
+    "db:migrate:test": "tsx --import ./tests/testSetup.mjs src/server/db/migrate.ts",
     "db:bootstrap-coordinator": "tsx src/server/db/bootstrapCoordinator.ts"
   },
   "dependencies": {

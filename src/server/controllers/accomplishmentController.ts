@@ -11,17 +11,10 @@ import {
   type EvidenceUploadInput,
 } from '../services/accomplishmentService.ts';
 import type { ApiSuccessResponse, EvidenceImageCategory } from '../types/api.ts';
+import { parseOptionalIntParam, parseStrictIntParam } from '../utils/apiValidation.ts';
 
 function extractIp(req: AuthenticatedRequest): string | null {
   return req.ip ?? req.socket.remoteAddress ?? null;
-}
-
-function parseOptionalInt(raw: unknown): number | undefined {
-  if (typeof raw !== 'string' || !raw.trim()) {
-    return undefined;
-  }
-  const n = Number.parseInt(raw, 10);
-  return Number.isFinite(n) ? n : undefined;
 }
 
 export async function getCoordinatorAccomplishments(
@@ -29,7 +22,7 @@ export async function getCoordinatorAccomplishments(
   res: Response,
 ): Promise<void> {
   const accomplishments = await listAccomplishments({
-    taskId: parseOptionalInt(req.query.taskId),
+    taskId: parseOptionalIntParam(req.query.taskId, 'INVALID_TASK_ID', 'task identifier'),
     status: typeof req.query.status === 'string' ? req.query.status : undefined,
     search: typeof req.query.search === 'string' ? req.query.search : undefined,
   });
@@ -46,7 +39,7 @@ export async function getCoordinatorAccomplishmentDetailHandler(
   req: AuthenticatedRequest,
   res: Response,
 ): Promise<void> {
-  const accomplishmentId = Number.parseInt(req.params.accomplishmentId ?? '', 10);
+  const accomplishmentId = parseStrictIntParam(req.params.accomplishmentId, 'INVALID_ACCOMPLISHMENT_ID', 'accomplishment identifier');
   const accomplishment = await getAccomplishmentDetail(accomplishmentId);
 
   const payload: ApiSuccessResponse<{ accomplishment: typeof accomplishment }> = {
@@ -64,7 +57,7 @@ export async function postCoordinatorAccomplishmentReview(
   if (!req.authUser) {
     throw new AppError(401, 'UNAUTHENTICATED', 'Authentication required.');
   }
-  const submissionId = Number.parseInt(req.params.submissionId ?? '', 10);
+  const submissionId = parseStrictIntParam(req.params.submissionId, 'INVALID_SUBMISSION_ID', 'accomplishment submission identifier');
   const body = (req.body ?? {}) as { decision?: unknown; remarks?: unknown };
   const decision =
     body.decision === 'approved' ||
@@ -124,7 +117,7 @@ export async function getStudentAccomplishmentDetailHandler(
   if (!req.authUser?.student) {
     throw new AppError(403, 'STUDENT_PROFILE_MISSING', 'An approved student profile is required.');
   }
-  const accomplishmentId = Number.parseInt(req.params.accomplishmentId ?? '', 10);
+  const accomplishmentId = parseStrictIntParam(req.params.accomplishmentId, 'INVALID_ACCOMPLISHMENT_ID', 'accomplishment identifier');
   const accomplishment = await getAccomplishmentDetail(
     accomplishmentId,
     req.authUser.student.id,
@@ -223,7 +216,7 @@ export async function getAuthorizedEvidenceFileHandler(
   if (!req.authUser) {
     throw new AppError(401, 'UNAUTHENTICATED', 'Authentication required.');
   }
-  const imageId = Number.parseInt(req.params.imageId ?? '', 10);
+  const imageId = parseStrictIntParam(req.params.imageId, 'INVALID_EVIDENCE_IMAGE_ID', 'evidence image identifier');
   const isCoordinator = req.authUser.roles.includes('RSS Coordinator');
 
   const file = await getAuthorizedEvidenceFile({

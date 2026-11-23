@@ -10,17 +10,10 @@ import {
   withdrawOrCancelStudentApplication,
 } from '../services/applicationService.ts';
 import type { ApiSuccessResponse } from '../types/api.ts';
+import { parseOptionalIntParam, parseStrictIntParam } from '../utils/apiValidation.ts';
 
 function extractIp(req: AuthenticatedRequest): string | null {
   return req.ip ?? req.socket.remoteAddress ?? null;
-}
-
-function parseOptionalInt(raw: unknown): number | undefined {
-  if (typeof raw !== 'string' || !raw.trim()) {
-    return undefined;
-  }
-  const n = Number.parseInt(raw, 10);
-  return Number.isFinite(n) ? n : undefined;
 }
 
 export async function postStudentTaskApplication(
@@ -31,7 +24,7 @@ export async function postStudentTaskApplication(
     throw new AppError(403, 'STUDENT_PROFILE_MISSING', 'An approved student profile is required.');
   }
 
-  const taskId = Number.parseInt(req.params.taskId ?? '', 10);
+  const taskId = parseStrictIntParam(req.params.taskId, 'INVALID_TASK_ID', 'task identifier');
   const body = (req.body ?? {}) as { applicationMessage?: unknown };
 
   const application = await applyToTask({
@@ -82,7 +75,7 @@ export async function getStudentApplicationDetailHandler(
   if (!req.authUser?.student) {
     throw new AppError(403, 'STUDENT_PROFILE_MISSING', 'An approved student profile is required.');
   }
-  const applicationId = Number.parseInt(req.params.applicationId ?? '', 10);
+  const applicationId = parseStrictIntParam(req.params.applicationId, 'INVALID_APPLICATION_ID', 'application identifier');
   const application = await getApplicationDetail(applicationId, req.authUser.student.id);
 
   const payload: ApiSuccessResponse<{ application: typeof application }> = {
@@ -100,7 +93,7 @@ export async function postStudentWithdrawApplication(
   if (!req.authUser?.student) {
     throw new AppError(403, 'STUDENT_PROFILE_MISSING', 'An approved student profile is required.');
   }
-  const applicationId = Number.parseInt(req.params.applicationId ?? '', 10);
+  const applicationId = parseStrictIntParam(req.params.applicationId, 'INVALID_APPLICATION_ID', 'application identifier');
   const body = (req.body ?? {}) as { reason?: unknown };
 
   const application = await withdrawOrCancelStudentApplication({
@@ -126,13 +119,13 @@ export async function getCoordinatorApplicationsHandler(
 ): Promise<void> {
   const result = await listCoordinatorApplications({
     search: typeof req.query.search === 'string' ? req.query.search : undefined,
-    taskId: parseOptionalInt(req.query.taskId),
-    studentId: parseOptionalInt(req.query.studentId),
-    sectionId: parseOptionalInt(req.query.sectionId),
-    academicYearId: parseOptionalInt(req.query.academicYearId),
+    taskId: parseOptionalIntParam(req.query.taskId, 'INVALID_TASK_ID', 'task identifier'),
+    studentId: parseOptionalIntParam(req.query.studentId, 'INVALID_STUDENT_ID', 'student identifier'),
+    sectionId: parseOptionalIntParam(req.query.sectionId, 'INVALID_SECTION_ID', 'section identifier'),
+    academicYearId: parseOptionalIntParam(req.query.academicYearId, 'INVALID_ACADEMIC_YEAR_ID', 'academic year identifier'),
     status: typeof req.query.status === 'string' ? req.query.status : undefined,
-    page: parseOptionalInt(req.query.page),
-    pageSize: parseOptionalInt(req.query.pageSize),
+    page: parseOptionalIntParam(req.query.page, 'INVALID_PAGE', 'page'),
+    pageSize: parseOptionalIntParam(req.query.pageSize, 'INVALID_PAGE_SIZE', 'page size'),
   });
 
   const payload: ApiSuccessResponse<typeof result> = {
@@ -147,7 +140,7 @@ export async function getCoordinatorApplicationDetailHandler(
   req: AuthenticatedRequest,
   res: Response,
 ): Promise<void> {
-  const applicationId = Number.parseInt(req.params.applicationId ?? '', 10);
+  const applicationId = parseStrictIntParam(req.params.applicationId, 'INVALID_APPLICATION_ID', 'application identifier');
   const application = await getApplicationDetail(applicationId);
 
   const payload: ApiSuccessResponse<{ application: typeof application }> = {
@@ -166,7 +159,7 @@ export async function postCoordinatorApplicationDecision(
     throw new AppError(401, 'UNAUTHENTICATED', 'Authentication required.');
   }
 
-  const applicationId = Number.parseInt(req.params.applicationId ?? '', 10);
+  const applicationId = parseStrictIntParam(req.params.applicationId, 'INVALID_APPLICATION_ID', 'application identifier');
   const body = (req.body ?? {}) as { decision?: unknown; remarks?: unknown };
   const decision = body.decision === 'approved' || body.decision === 'rejected' ? body.decision : null;
   if (!decision) {

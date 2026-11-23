@@ -573,6 +573,17 @@ export async function listCoordinatorApplications(input: {
 
   const status = input.status?.trim().toLowerCase();
   if (
+    status &&
+    status !== 'all' &&
+    status !== 'pending' &&
+    status !== 'approved' &&
+    status !== 'rejected' &&
+    status !== 'withdrawn' &&
+    status !== 'cancelled'
+  ) {
+    throw new AppError(400, 'INVALID_APPLICATION_STATUS', 'Invalid application status filter.');
+  }
+  if (
     status === 'pending' ||
     status === 'approved' ||
     status === 'rejected' ||

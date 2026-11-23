@@ -479,12 +479,24 @@ const RSS_REPORTS_SELECT = `
   LEFT JOIN academic_years ay ON ay.id = rr.academic_year_id
 `;
 
+export interface RssReportListResult {
+  reports: RssReportRecord[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+}
+
 export async function listRssReports(input: {
   reportType?: ReportType;
   studentId?: number;
   sectionId?: number;
   academicYearId?: number;
-}): Promise<RssReportRecord[]> {
+  page?: number;
+  pageSize?: number;
+}): Promise<RssReportListResult> {
+  const page = input.page !== undefined && input.page > 0 ? Math.trunc(input.page) : 1;
+  const pageSize = input.pageSize !== undefined && input.pageSize > 0 ? Math.min(100, Math.trunc(input.pageSize)) : 20;
+
   const conditions: string[] = [];
   const params: unknown[] = [];
 
@@ -508,14 +520,35 @@ export async function listRssReports(input: {
   }
 
   const whereSql = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+  // Count total matching records
+  const countRes = await query<{ total: string }>(
+    `SELECT COUNT(*)::text AS total
+     FROM rss_reports rr
+     LEFT JOIN accomplishment_submissions sub ON sub.id = rr.accomplishment_submission_id
+     LEFT JOIN accomplishments acc ON acc.id = sub.accomplishment_id
+     LEFT JOIN task_applications ta ON ta.id = acc.application_id
+     LEFT JOIN students s ON s.id = ta.student_id
+     ${whereSql}`,
+    params,
+  );
+  const totalCount = Number.parseInt(countRes.rows[0]?.total ?? '0', 10) || 0;
+
+  // Fetch paginated records
+  const offset = (page - 1) * pageSize;
   const res = await query<ReportDbRow>(
     `${RSS_REPORTS_SELECT}
      ${whereSql}
      ORDER BY rr.generated_at DESC, rr.id DESC
-     LIMIT 200`,
-    params,
+     LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+    [...params, pageSize, offset],
   );
-  return res.rows.map(mapReportRow);
+  return {
+    reports: res.rows.map(mapReportRow),
+    totalCount,
+    page,
+    pageSize,
+  };
 }
 
 export async function getIndividualReportPreview(input: {
@@ -707,13 +740,41 @@ export async function getIndividualReportPreview(input: {
   }
   const subExtraSql = subFilters.length > 0 ? `AND ${subFilters.join(' AND ')}` : '';
 
+  // Per-submission credited hours must honour the same report date window as totals.
+  let subAttDateSql = '';
+  let subAdjDateSql = '';
+  const subDateStartPos = effectiveStart ? 2 : null;
+  const subDateEndPos = effectiveEnd ? (effectiveStart ? 3 : 2) : null;
+  if (subDateStartPos !== null) {
+    subAttDateSql += ` AND att.attendance_date >= $${subDateStartPos}::date`;
+    subAdjDateSql += ` AND adj.approved_at::date >= $${subDateStartPos}::date`;
+  }
+  if (subDateEndPos !== null) {
+    subAttDateSql += ` AND att.attendance_date <= $${subDateEndPos}::date`;
+    subAdjDateSql += ` AND adj.approved_at::date <= $${subDateEndPos}::date`;
+  }
+
+  const adjIndividualParams: unknown[] = [studentId];
+  const adjIndividualFilters: string[] = [];
+  if (effectiveStart) {
+    adjIndividualParams.push(effectiveStart);
+    adjIndividualFilters.push(`adj.approved_at::date >= \$${adjIndividualParams.length}::date`);
+  }
+  if (effectiveEnd) {
+    adjIndividualParams.push(effectiveEnd);
+    adjIndividualFilters.push(`adj.approved_at::date <= \$${adjIndividualParams.length}::date`);
+  }
+  const adjIndividualExtra = adjIndividualFilters.length > 0
+    ? ` AND ${adjIndividualFilters.join(' AND ')}`
+    : '';
+
   const [adjRes, appCountRes, subRes] = await Promise.all([
     query<{ sum_adj: string }>(
       `SELECT COALESCE(SUM(adj.adjustment_hours), 0)::text AS sum_adj
        FROM service_hour_adjustments adj
        JOIN task_applications ta ON ta.id = adj.application_id
-       WHERE ta.student_id = $1 AND adj.status = 'approved'`,
-      [studentId],
+       WHERE ta.student_id = $1 AND adj.status = 'approved'${adjIndividualExtra}`,
+      adjIndividualParams,
     ),
     query<{ count: string }>(
       `SELECT COUNT(*)::text AS count
@@ -746,12 +807,12 @@ export async function getIndividualReportPreview(input: {
            COALESCE((
              SELECT SUM(att.verified_hours)
              FROM attendance att
-             WHERE att.application_id = ta.id AND att.verification_status = 'verified'
+             WHERE att.application_id = ta.id AND att.verification_status = 'verified'${subAttDateSql}
            ), 0)
            + COALESCE((
              SELECT SUM(adj.adjustment_hours)
              FROM service_hour_adjustments adj
-             WHERE adj.application_id = ta.id AND adj.status = 'approved'
+             WHERE adj.application_id = ta.id AND adj.status = 'approved'${subAdjDateSql}
            ), 0)
          )::text AS verified_hours,
          acc.reviewed_at::text AS reviewed_at
@@ -1030,6 +1091,20 @@ export async function getSectionReportPreview(input: {
       : `ssh.section_id = $1 AND ssh.is_current = TRUE`;
   const scopeParams: unknown[] = ayRecord !== null ? [sectionId, ayRecord.id] : [sectionId];
 
+  const adjSectionParams: unknown[] = [...scopeParams];
+  const adjSectionFilters: string[] = [];
+  if (effectiveStart) {
+    adjSectionParams.push(effectiveStart);
+    adjSectionFilters.push(`AND adj.approved_at::date >= $${adjSectionParams.length}::date`);
+  }
+  if (effectiveEnd) {
+    adjSectionParams.push(effectiveEnd);
+    adjSectionFilters.push(`AND adj.approved_at::date <= $${adjSectionParams.length}::date`);
+  }
+  const adjSectionExtra = adjSectionFilters.length > 0
+    ? ` ${adjSectionFilters.join(' ')}`
+    : '';
+
   const attScopeParams: unknown[] = [...scopeParams];
   const attDateFilters: string[] = [];
   if (effectiveStart) {
@@ -1043,13 +1118,20 @@ export async function getSectionReportPreview(input: {
 
   const subScopeParams: unknown[] = [...scopeParams];
   const subDateFilters: string[] = [];
+  // Per-submission credited hours must honour the same report date window as totals.
+  let subAttDateSql = '';
+  let subAdjDateSql = '';
   if (effectiveStart) {
     subScopeParams.push(effectiveStart);
     subDateFilters.push(`AND sub.activity_date >= $${subScopeParams.length}::date`);
+    subAttDateSql += ` AND att.attendance_date >= $${subScopeParams.length}::date`;
+    subAdjDateSql += ` AND adj.approved_at::date >= $${subScopeParams.length}::date`;
   }
   if (effectiveEnd) {
     subScopeParams.push(effectiveEnd);
     subDateFilters.push(`AND sub.activity_date <= $${subScopeParams.length}::date`);
+    subAttDateSql += ` AND att.attendance_date <= $${subScopeParams.length}::date`;
+    subAdjDateSql += ` AND adj.approved_at::date <= $${subScopeParams.length}::date`;
   }
 
   const [enrolledRes, appRes, attRes, adjRes, subRes] = await Promise.all([
@@ -1076,20 +1158,28 @@ export async function getSectionReportPreview(input: {
          COALESCE(SUM(att.verified_hours), 0)::text AS hours
        FROM attendance att
        JOIN task_applications ta ON ta.id = att.application_id
-       JOIN student_section_history ssh ON ssh.student_id = ta.student_id
-       WHERE ${studentScopeSql}
-         AND att.verification_status = 'verified'
-         ${attDateFilters.join('\n         ')}`,
+       WHERE EXISTS (
+         SELECT 1 FROM student_section_history ssh
+         WHERE ssh.student_id = ta.student_id
+           AND ssh.section_id = $1::integer
+           ${ayRecord !== null ? `AND ssh.academic_year_id = $2::integer` : `AND ssh.is_current = TRUE`}
+       )
+       AND att.verification_status = 'verified'
+       ${attDateFilters.join('\n         ')}`,
       attScopeParams,
     ),
     query<{ hours: string }>(
       `SELECT COALESCE(SUM(adj.adjustment_hours), 0)::text AS hours
        FROM service_hour_adjustments adj
        JOIN task_applications ta ON ta.id = adj.application_id
-       JOIN student_section_history ssh ON ssh.student_id = ta.student_id
-       WHERE ${studentScopeSql}
-         AND adj.status = 'approved'`,
-      scopeParams,
+       WHERE EXISTS (
+         SELECT 1 FROM student_section_history ssh
+         WHERE ssh.student_id = ta.student_id
+           AND ssh.section_id = $1::integer
+           ${ayRecord !== null ? `AND ssh.academic_year_id = $2::integer` : `AND ssh.is_current = TRUE`}
+       )
+       AND adj.status = 'approved'${adjSectionExtra}`,
+      adjSectionParams,
     ),
     query<{
       submission_id: number;
@@ -1111,12 +1201,12 @@ export async function getSectionReportPreview(input: {
            COALESCE((
              SELECT SUM(att.verified_hours)
              FROM attendance att
-             WHERE att.application_id = ta.id AND att.verification_status = 'verified'
+             WHERE att.application_id = ta.id AND att.verification_status = 'verified'${subAttDateSql}
            ), 0)
            + COALESCE((
              SELECT SUM(adj.adjustment_hours)
              FROM service_hour_adjustments adj
-             WHERE adj.application_id = ta.id AND adj.status = 'approved'
+             WHERE adj.application_id = ta.id AND adj.status = 'approved'${subAdjDateSql}
            ), 0)
          )::text AS verified_hours
        FROM accomplishment_submissions sub

@@ -14,14 +14,7 @@ import {
   listSectionRepScopedTasks,
 } from '../services/systemModulesService.ts';
 import type { ApiSuccessResponse } from '../types/api.ts';
-
-function parseOptionalInt(raw: unknown): number | undefined {
-  if (typeof raw !== 'string' || !raw.trim()) {
-    return undefined;
-  }
-  const n = Number.parseInt(raw, 10);
-  return Number.isFinite(n) ? n : undefined;
-}
+import { parseOptionalIntParam } from '../utils/apiValidation.ts';
 
 export async function getNotificationsHandler(
   req: AuthenticatedRequest,
@@ -35,7 +28,7 @@ export async function getNotificationsHandler(
   const result = await listUserNotifications({
     userId: req.authUser.id,
     status,
-    limit: parseOptionalInt(req.query.limit),
+    limit: parseOptionalIntParam(req.query.limit, 'INVALID_NOTIFICATION_LIMIT', 'notification limit'),
   });
 
   const payload: ApiSuccessResponse<typeof result> = {
@@ -90,12 +83,12 @@ export async function getCoordinatorAuditLogsHandler(
     search: typeof req.query.search === 'string' ? req.query.search : undefined,
     action: typeof req.query.action === 'string' ? req.query.action : undefined,
     subjectType: typeof req.query.subjectType === 'string' ? req.query.subjectType : undefined,
-    subjectId: parseOptionalInt(req.query.subjectId),
-    userId: parseOptionalInt(req.query.userId),
+    subjectId: parseOptionalIntParam(req.query.subjectId, 'INVALID_SUBJECT_ID', 'subject identifier'),
+    userId: parseOptionalIntParam(req.query.userId, 'INVALID_USER_ID', 'user identifier'),
     dateFrom: typeof req.query.dateFrom === 'string' ? req.query.dateFrom : undefined,
     dateTo: typeof req.query.dateTo === 'string' ? req.query.dateTo : undefined,
-    page: parseOptionalInt(req.query.page),
-    pageSize: parseOptionalInt(req.query.pageSize),
+    page: parseOptionalIntParam(req.query.page, 'INVALID_PAGE', 'page'),
+    pageSize: parseOptionalIntParam(req.query.pageSize, 'INVALID_PAGE_SIZE', 'page size'),
   });
 
   const payload: ApiSuccessResponse<typeof result> = {

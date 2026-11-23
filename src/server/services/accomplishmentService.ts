@@ -9,7 +9,12 @@ import type {
   EvidenceImageCategory,
   EvidenceImageRecord,
 } from '../types/api.ts';
-import { readStoredFileBuffer, saveEvidenceImageBase64 } from '../utils/fileStorage.ts';
+import {
+  deleteEvidenceFile,
+  readStoredFileBuffer,
+  removeEvidenceDirectoryIfEmpty,
+  saveEvidenceImageBase64,
+} from '../utils/fileStorage.ts';
 import { validateIsoDateString } from './academicService.ts';
 import { recordAuditLog } from './auditService.ts';
 import { createNotification, notifyActiveCoordinators } from './notificationService.ts';
@@ -211,6 +216,17 @@ export async function listAccomplishments(input: {
     conditions.push(`t.id = $${params.length}`);
   }
   const status = input.status?.trim().toLowerCase();
+  if (
+    status &&
+    status !== 'all' &&
+    status !== 'draft' &&
+    status !== 'submitted' &&
+    status !== 'revision_required' &&
+    status !== 'approved' &&
+    status !== 'rejected'
+  ) {
+    throw new AppError(400, 'INVALID_ACCOMPLISHMENT_STATUS', 'Invalid accomplishment status filter.');
+  }
   if (
     status === 'draft' ||
     status === 'submitted' ||
@@ -500,6 +516,30 @@ export interface EvidenceUploadInput {
   caption?: string;
 }
 
+export async function cleanupWrittenEvidence(writtenPaths: string[]): Promise<void> {
+  for (const writtenPath of writtenPaths) {
+    try {
+      await deleteEvidenceFile(writtenPath);
+    } catch (cleanupErr) {
+      console.warn('[ACCOMPLISHMENT_CLEANUP] Failed to remove evidence file after rollback:', cleanupErr, {
+        storagePath: writtenPath,
+      });
+    }
+  }
+  if (writtenPaths.length > 0) {
+    const relativeDir = writtenPaths[0].split('/').slice(0, -1).join('/');
+    if (relativeDir) {
+      try {
+        await removeEvidenceDirectoryIfEmpty(relativeDir);
+      } catch (cleanupErr) {
+        console.warn('[ACCOMPLISHMENT_CLEANUP] Failed to remove evidence directory after rollback:', cleanupErr, {
+          directory: relativeDir,
+        });
+      }
+    }
+  }
+}
+
 export async function submitStudentAccomplishmentVersion(input: {
   applicationId: number;
   studentId: number;
@@ -553,14 +593,20 @@ export async function submitStudentAccomplishmentVersion(input: {
     }
   }
 
-  const accomplishmentId = await withTransaction(async (client) => {
+  const writtenPaths: string[] = [];
+  let accomplishmentId!: number;
+  try {
+    accomplishmentId = await withTransaction(async (client) => {
     const appRes = await client.query<{
       id: number;
       student_id: number;
       status: string;
       task_title: string;
+      activity_start: string | null;
+      activity_end: string | null;
     }>(
-      `SELECT ta.id, ta.student_id, ta.status, t.title AS task_title
+      `SELECT ta.id, ta.student_id, ta.status, t.title AS task_title,
+              t.activity_start, t.activity_end
        FROM task_applications ta
        JOIN tasks t ON t.id = ta.task_id
        WHERE ta.id = $1
@@ -584,6 +630,38 @@ export async function submitStudentAccomplishmentVersion(input: {
         'APPLICATION_NOT_APPROVED',
         'Accomplishments can only be submitted for approved task participations.',
       );
+    }
+
+    // Activity-date validation against task activity period and future-date restriction.
+    const todayUtc = new Date().toISOString().slice(0, 10);
+    if (activityDate > todayUtc) {
+      throw new AppError(
+        400,
+        'INVALID_ACTIVITY_DATE',
+        'Activity date cannot be in the future.',
+      );
+    }
+
+    if (appRow.activity_start) {
+      const activityStartUtc = new Date(appRow.activity_start).toISOString().slice(0, 10);
+      if (activityDate < activityStartUtc) {
+        throw new AppError(
+          400,
+          'INVALID_ACTIVITY_DATE',
+          `Activity date cannot be before the task activity start date (${activityStartUtc}).`,
+        );
+      }
+    }
+
+    if (appRow.activity_end) {
+      const activityEndUtc = new Date(appRow.activity_end).toISOString().slice(0, 10);
+      if (activityDate > activityEndUtc) {
+        throw new AppError(
+          400,
+          'INVALID_ACTIVITY_DATE',
+          `Activity date cannot be after the task activity end date (${activityEndUtc}).`,
+        );
+      }
     }
 
     let accRowRes = await client.query<{
@@ -657,6 +735,7 @@ export async function submitStudentAccomplishmentVersion(input: {
         mimeType: img.mimeType,
         dataBase64: img.dataBase64,
       });
+      writtenPaths.push(saved.storagePath);
       const caption = normalizeOptionalText(img.caption, 500, 'Image caption');
       await client.query(
         `INSERT INTO evidence_images (
@@ -728,6 +807,10 @@ export async function submitStudentAccomplishmentVersion(input: {
 
     return accId;
   });
+  } catch (err) {
+    await cleanupWrittenEvidence(writtenPaths);
+    throw err;
+  }
 
   return getAccomplishmentDetail(accomplishmentId, studentId);
 }

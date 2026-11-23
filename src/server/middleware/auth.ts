@@ -19,6 +19,7 @@ import {
   verifyCsrfToken,
   verifySessionToken,
 } from '../utils/session.ts';
+import { parseStrictIntParam } from '../utils/apiValidation.ts';
 
 export interface AuthenticatedRequest extends ContextualRequest {
   authUser?: AuthenticatedUser;
@@ -280,11 +281,7 @@ export function requireStudentOwnership(paramName = 'studentId') {
       return;
     }
 
-    const requestedId = Number.parseInt(req.params[paramName] ?? '', 10);
-    if (!Number.isInteger(requestedId) || requestedId <= 0) {
-      next(new AppError(400, 'INVALID_STUDENT_ID', 'Invalid student identifier.'));
-      return;
-    }
+    const requestedId = parseStrictIntParam(req.params[paramName], 'INVALID_STUDENT_ID', 'Invalid student identifier');
 
     if (
       req.authUser.roles.includes('Student') &&

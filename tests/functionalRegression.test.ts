@@ -1283,6 +1283,34 @@ test('CT-RSS End-to-End Functional, Security, RBAC, Report PDF, and Zero-Persist
       assert.equal(revOkRes.status, 200);
       assert.equal(revOkRes.json?.data?.accomplishment?.status, 'revision_required');
 
+      // Report eligibility: revision_required submission must NOT appear in individual report
+      const revIndPreviewRes = await apiFetch(
+        baseUrl,
+        `/api/v1/coordinator/reports/individual/preview?studentId=${stu1Id}&academicYearId=${ay1Id}`,
+        { session: coordSession },
+      );
+      assert.equal(revIndPreviewRes.status, 200);
+      const revIndSubs = revIndPreviewRes.json?.data?.preview?.includedSubmissions ?? [];
+      assert.ok(
+        !revIndSubs.some((s: { submissionId: number }) => s.submissionId === subV1Id),
+        'Revision-required submission must not appear in individual report preview',
+      );
+      assert.equal(revIndPreviewRes.json?.data?.preview?.totals?.approvedAccomplishmentsCount, 0,
+        'Approved accomplishments count must be 0 while submission is revision_required');
+
+      // Report eligibility: revision_required submission must NOT appear in section report
+      const revSecPreviewRes = await apiFetch(
+        baseUrl,
+        `/api/v1/coordinator/reports/section/preview?sectionId=${sectionBId}&academicYearId=${ay1Id}`,
+        { session: coordSession },
+      );
+      assert.equal(revSecPreviewRes.status, 200);
+      const revSecSubs = revSecPreviewRes.json?.data?.preview?.includedSubmissions ?? [];
+      assert.ok(
+        !revSecSubs.some((s: { submissionId: number }) => s.submissionId === subV1Id),
+        'Revision-required submission must not appear in section report preview',
+      );
+
       // Student submits v2; verify v1 stays preserved in submission history!
       const submitV2Res = await apiFetch(baseUrl, '/api/v1/student/accomplishments/submit', {
         method: 'POST',
@@ -1320,6 +1348,42 @@ test('CT-RSS End-to-End Functional, Security, RBAC, Report PDF, and Zero-Persist
       );
       assert.equal(approveAccRes.status, 200);
       assert.equal(approveAccRes.json?.data?.accomplishment?.status, 'approved');
+
+      // Report eligibility: v2 (approved) must appear, v1 (revision_required) must not
+      const postApproveIndPreviewRes = await apiFetch(
+        baseUrl,
+        `/api/v1/coordinator/reports/individual/preview?studentId=${stu1Id}&academicYearId=${ay1Id}`,
+        { session: coordSession },
+      );
+      assert.equal(postApproveIndPreviewRes.status, 200);
+      const postApproveIndSubs = postApproveIndPreviewRes.json?.data?.preview?.includedSubmissions ?? [];
+      assert.ok(
+        postApproveIndSubs.some((s: { submissionId: number }) => s.submissionId === subV2Id),
+        'Approved v2 must appear in individual report preview',
+      );
+      assert.ok(
+        !postApproveIndSubs.some((s: { submissionId: number }) => s.submissionId === subV1Id),
+        'Revision-required v1 must not appear in individual report preview',
+      );
+      assert.equal(postApproveIndPreviewRes.json?.data?.preview?.totals?.approvedAccomplishmentsCount, 1,
+        'Approved accomplishments count must be 1 (only v2)');
+
+      // Section report: v2 present, v1 absent
+      const postApproveSecPreviewRes = await apiFetch(
+        baseUrl,
+        `/api/v1/coordinator/reports/section/preview?sectionId=${sectionBId}&academicYearId=${ay1Id}`,
+        { session: coordSession },
+      );
+      assert.equal(postApproveSecPreviewRes.status, 200);
+      const postApproveSecSubs = postApproveSecPreviewRes.json?.data?.preview?.includedSubmissions ?? [];
+      assert.ok(
+        postApproveSecSubs.some((s: { submissionId: number }) => s.submissionId === subV2Id),
+        'Approved v2 must appear in section report preview',
+      );
+      assert.ok(
+        !postApproveSecSubs.some((s: { submissionId: number }) => s.submissionId === subV1Id),
+        'Revision-required v1 must not appear in section report preview',
+      );
 
       // -----------------------------------------------------------------------
       // 9. Report Templates, Individual PDF Reports, Section PDF Reports & Scoping
@@ -1372,6 +1436,16 @@ test('CT-RSS End-to-End Functional, Security, RBAC, Report PDF, and Zero-Persist
       assert.equal(indPreviewRes.status, 200);
       assert.equal(indPreviewRes.json?.data?.preview?.totals?.totalCreditedHours, 5);
       assert.equal(indPreviewRes.json?.data?.preview?.totals?.approvedAccomplishmentsCount, 1);
+      // Verify the approved submission in the report is v2 (not v1)
+      const indPreviewSubs = indPreviewRes.json?.data?.preview?.includedSubmissions ?? [];
+      assert.ok(
+        indPreviewSubs.some((s: { submissionId: number }) => s.submissionId === subV2Id),
+        'Report must include the approved v2 submission',
+      );
+      assert.ok(
+        !indPreviewSubs.some((s: { submissionId: number }) => s.submissionId === subV1Id),
+        'Report must not include the revision_required v1 submission',
+      );
 
       const genIndRes = await apiFetch(baseUrl, '/api/v1/coordinator/reports/individual/generate', {
         method: 'POST',

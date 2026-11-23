@@ -823,6 +823,17 @@ export async function assignOrTransferStudentSection(input: {
       ? validateIsoDateString(input.effectiveDate, 'Effective date')
       : getTodayIsoDate();
 
+  // Transfers are applied immediately on save; there is no scheduling support, so a
+  // future effective date would otherwise become the current placement today.
+  const todayIso = getTodayIsoDate();
+  if (effectiveDate > todayIso) {
+    throw new AppError(
+      400,
+      'INVALID_EFFECTIVE_DATE',
+      'Effective date cannot be in the future.',
+    );
+  }
+
   await withTransaction(async (client) => {
     const studentRes = await client.query<{ id: number }>(
       `SELECT st.id
@@ -870,13 +881,29 @@ export async function assignOrTransferStudentSection(input: {
       );
     }
 
-    const ayRes = await client.query<{ id: number; name: string }>(
-      `SELECT id, name FROM academic_years WHERE id = $1 LIMIT 1`,
+    const ayRes = await client.query<{
+      id: number;
+      name: string;
+      start_date: string;
+      end_date: string;
+    }>(
+      `SELECT id, name, start_date::text AS start_date, end_date::text AS end_date
+       FROM academic_years
+       WHERE id = $1
+       LIMIT 1`,
       [academicYearId],
     );
     const targetAy = ayRes.rows[0];
     if (!targetAy) {
       throw new AppError(404, 'ACADEMIC_YEAR_NOT_FOUND', 'Selected academic year does not exist.');
+    }
+    if (effectiveDate < targetAy.start_date || effectiveDate > targetAy.end_date) {
+      throw new AppError(
+        400,
+        'INVALID_EFFECTIVE_DATE',
+        `Effective date (${effectiveDate}) must fall within academic year ` +
+          `${targetAy.name} (${targetAy.start_date} to ${targetAy.end_date}).`,
+      );
     }
 
     const currentRes = await client.query<{
@@ -914,29 +941,47 @@ export async function assignOrTransferStudentSection(input: {
         );
       }
 
+      // Close every current row for this student (not just rows[0]) so a partially
+      // inconsistent history cannot leave a second is_current = TRUE row behind.
       await client.query(
         `UPDATE student_section_history
          SET is_current = FALSE,
              ended_at = $1::date,
              updated_at = NOW()
-         WHERE id = $2`,
-        [effectiveDate, Number(current.id)],
+         WHERE student_id = $2 AND is_current = TRUE`,
+        [effectiveDate, studentId],
       );
     }
 
-    const inserted = await client.query<{ id: number }>(
-      `INSERT INTO student_section_history (
-         student_id,
-         section_id,
-         academic_year_id,
-         enrolled_at,
-         ended_at,
-         is_current
-       )
-       VALUES ($1, $2, $3, $4::date, NULL, TRUE)
-       RETURNING id`,
-      [studentId, sectionId, academicYearId, effectiveDate],
-    );
+    let inserted!: { rows: Array<{ id: number }> };
+    try {
+      inserted = await client.query<{ id: number }>(
+        `INSERT INTO student_section_history (
+           student_id,
+           section_id,
+           academic_year_id,
+           enrolled_at,
+           ended_at,
+           is_current
+         )
+         VALUES ($1, $2, $3, $4::date, NULL, TRUE)
+         RETURNING id`,
+        [studentId, sectionId, academicYearId, effectiveDate],
+      );
+    } catch (err) {
+      const pgError = err as { code?: string; constraint?: string };
+      if (
+        pgError?.code === '23505' &&
+        pgError?.constraint === 'uq_student_section_history_current'
+      ) {
+        throw new AppError(
+          409,
+          'CONCURRENT_ASSIGNMENT_CONFLICT',
+          'Another section assignment for this student is in progress. Retry the transfer.',
+        );
+      }
+      throw err;
+    }
     const newHistoryId = Number(inserted.rows[0]?.id);
 
     await recordAuditLog(

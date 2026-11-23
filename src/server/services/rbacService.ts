@@ -47,6 +47,9 @@ export async function listStudentRegistrations(
     normalizedFilter === 'pending' ||
     normalizedFilter === 'approved' ||
     normalizedFilter === 'rejected';
+  if (normalizedFilter && !hasFilter) {
+    throw new AppError(400, 'INVALID_REGISTRATION_STATUS', 'Invalid registration status filter.');
+  }
 
   const sql = `
     SELECT
@@ -319,13 +322,58 @@ export async function updateAccountStatus(input: {
   }
 
   return withTransaction(async (client) => {
-    const existingRes = await client.query<{ id: number; account_status: AccountStatus }>(
-      `SELECT id, account_status FROM users WHERE id = $1 AND deleted_at IS NULL FOR UPDATE`,
+    const existingRes = await client.query<{
+      id: number;
+      account_status: AccountStatus;
+      registration_status: string | null;
+    }>(
+      `SELECT u.id, u.account_status, s.registration_status
+       FROM users u
+       LEFT JOIN students s ON s.user_id = u.id
+       WHERE u.id = $1 AND u.deleted_at IS NULL
+       FOR UPDATE OF u`,
       [input.targetUserId],
     );
     const existing = existingRes.rows[0];
     if (!existing) {
       throw new AppError(404, 'USER_NOT_FOUND', 'Target user account not found.');
+    }
+
+    const isStudent = existing.registration_status !== null;
+    const registrationStatus = existing.registration_status;
+
+    // Student accounts must obey the registration/account consistency matrix.
+    // Rejected or pending registrations cannot be activated through this endpoint,
+    // and a rejected registration can never be reactivated via account status.
+    if (isStudent) {
+      if (registrationStatus === 'rejected' && nextStatus !== 'deactivated') {
+        throw new AppError(
+          409,
+          'REGISTRATION_REJECTED',
+          'A rejected registration cannot be reactivated through account status. Re-decide the registration first.',
+        );
+      }
+      if (registrationStatus === 'pending' && (nextStatus === 'active' || nextStatus === 'suspended')) {
+        throw new AppError(
+          409,
+          'REGISTRATION_PENDING',
+          'A pending registration cannot be activated or suspended through account status. Approve or reject the registration first.',
+        );
+      }
+      if (registrationStatus === 'approved' && nextStatus === 'pending') {
+        throw new AppError(
+          400,
+          'INVALID_ACCOUNT_STATUS',
+          'An approved student account cannot be moved back to pending.',
+        );
+      }
+      if (existing.account_status === 'deactivated' && nextStatus === 'suspended') {
+        throw new AppError(
+          400,
+          'INVALID_ACCOUNT_STATUS',
+          'A deactivated student account must be reactivated before it can be suspended.',
+        );
+      }
     }
 
     await client.query(

@@ -18,21 +18,10 @@ import {
   updateTaskCategory,
 } from '../services/taskService.ts';
 import type { ApiSuccessResponse } from '../types/api.ts';
+import { parseOptionalIntParam, parseStrictIntParam } from '../utils/apiValidation.ts';
 
 function extractClientIp(req: AuthenticatedRequest): string | null {
   return req.ip ?? req.socket.remoteAddress ?? null;
-}
-
-function parseOptionalIntQuery(raw: unknown): number | undefined {
-  if (typeof raw !== 'string') {
-    return undefined;
-  }
-  const trimmed = raw.trim();
-  if (!trimmed) {
-    return undefined;
-  }
-  const parsed = Number.parseInt(trimmed, 10);
-  return Number.isNaN(parsed) ? 0 : parsed;
 }
 
 function parseOptionalIdList(raw: unknown): number[] | undefined {
@@ -95,7 +84,7 @@ export async function patchCoordinatorTaskCategory(
   if (!req.authUser) {
     throw new AppError(401, 'UNAUTHENTICATED', 'Authentication required.');
   }
-  const categoryId = Number.parseInt(req.params.categoryId ?? '', 10);
+  const categoryId = parseStrictIntParam(req.params.categoryId, 'INVALID_TASK_CATEGORY_ID', 'task category identifier');
   const body = (req.body ?? {}) as Record<string, unknown>;
   const category = await updateTaskCategory({
     categoryId,
@@ -126,11 +115,11 @@ export async function getCoordinatorTasks(
   const result = await listCoordinatorTasks({
     search: typeof req.query.search === 'string' ? req.query.search : undefined,
     status: typeof req.query.status === 'string' ? req.query.status : undefined,
-    categoryId: parseOptionalIntQuery(req.query.categoryId),
+    categoryId: parseOptionalIntParam(req.query.categoryId, 'INVALID_TASK_CATEGORY_ID', 'task category identifier'),
     visibility: typeof req.query.visibility === 'string' ? req.query.visibility : undefined,
     sort: typeof req.query.sort === 'string' ? req.query.sort : undefined,
-    page: parseOptionalIntQuery(req.query.page),
-    pageSize: parseOptionalIntQuery(req.query.pageSize),
+    page: parseOptionalIntParam(req.query.page, 'INVALID_PAGE', 'page'),
+    pageSize: parseOptionalIntParam(req.query.pageSize, 'INVALID_PAGE_SIZE', 'page size'),
   });
 
   const response: ApiSuccessResponse<typeof result> = {
@@ -145,7 +134,7 @@ export async function getCoordinatorTaskById(
   req: AuthenticatedRequest,
   res: Response,
 ): Promise<void> {
-  const taskId = Number.parseInt(req.params.taskId ?? '', 10);
+  const taskId = parseStrictIntParam(req.params.taskId, 'INVALID_TASK_ID', 'task identifier');
   const task = await getCoordinatorTaskDetail(taskId);
   const response: ApiSuccessResponse<{ task: typeof task }> = {
     success: true,
@@ -206,7 +195,7 @@ export async function patchCoordinatorTask(
   if (!req.authUser) {
     throw new AppError(401, 'UNAUTHENTICATED', 'Authentication required.');
   }
-  const taskId = Number.parseInt(req.params.taskId ?? '', 10);
+  const taskId = parseStrictIntParam(req.params.taskId, 'INVALID_TASK_ID', 'task identifier');
   const body = (req.body ?? {}) as Record<string, unknown>;
   const task = await updateCoordinatorTask({
     taskId,
@@ -251,7 +240,7 @@ export async function patchCoordinatorTaskStatus(
   if (!req.authUser) {
     throw new AppError(401, 'UNAUTHENTICATED', 'Authentication required.');
   }
-  const taskId = Number.parseInt(req.params.taskId ?? '', 10);
+  const taskId = parseStrictIntParam(req.params.taskId, 'INVALID_TASK_ID', 'task identifier');
   const body = (req.body ?? {}) as Record<string, unknown>;
   const task = await updateCoordinatorTaskStatus({
     taskId,
@@ -277,7 +266,7 @@ export async function getCoordinatorTaskSessions(
   req: AuthenticatedRequest,
   res: Response,
 ): Promise<void> {
-  const taskId = Number.parseInt(req.params.taskId ?? '', 10);
+  const taskId = parseStrictIntParam(req.params.taskId, 'INVALID_TASK_ID', 'task identifier');
   const sessions = await listCoordinatorTaskSessions(taskId);
   const response: ApiSuccessResponse<{ sessions: typeof sessions }> = {
     success: true,
@@ -294,7 +283,7 @@ export async function postCoordinatorTaskSession(
   if (!req.authUser) {
     throw new AppError(401, 'UNAUTHENTICATED', 'Authentication required.');
   }
-  const taskId = Number.parseInt(req.params.taskId ?? '', 10);
+  const taskId = parseStrictIntParam(req.params.taskId, 'INVALID_TASK_ID', 'task identifier');
   const body = (req.body ?? {}) as Record<string, unknown>;
   const session = await createCoordinatorTaskSession({
     taskId,
@@ -323,8 +312,8 @@ export async function patchCoordinatorTaskSession(
   if (!req.authUser) {
     throw new AppError(401, 'UNAUTHENTICATED', 'Authentication required.');
   }
-  const taskId = Number.parseInt(req.params.taskId ?? '', 10);
-  const sessionId = Number.parseInt(req.params.sessionId ?? '', 10);
+  const taskId = parseStrictIntParam(req.params.taskId, 'INVALID_TASK_ID', 'task identifier');
+  const sessionId = parseStrictIntParam(req.params.sessionId, 'INVALID_TASK_SESSION_ID', 'task session identifier');
   const body = (req.body ?? {}) as Record<string, unknown>;
   const session = await updateCoordinatorTaskSession({
     taskId,
@@ -354,8 +343,8 @@ export async function deleteCoordinatorTaskSessionHandler(
   if (!req.authUser) {
     throw new AppError(401, 'UNAUTHENTICATED', 'Authentication required.');
   }
-  const taskId = Number.parseInt(req.params.taskId ?? '', 10);
-  const sessionId = Number.parseInt(req.params.sessionId ?? '', 10);
+  const taskId = parseStrictIntParam(req.params.taskId, 'INVALID_TASK_ID', 'task identifier');
+  const sessionId = parseStrictIntParam(req.params.sessionId, 'INVALID_TASK_SESSION_ID', 'task session identifier');
   const result = await deleteCoordinatorTaskSession({
     taskId,
     sessionId,
@@ -391,7 +380,7 @@ export async function getStudentTasks(
   const result = await listStudentEligibleTasks({
     studentId: req.authUser.student.id,
     search: typeof req.query.search === 'string' ? req.query.search : undefined,
-    categoryId: parseOptionalIntQuery(req.query.categoryId),
+    categoryId: parseOptionalIntParam(req.query.categoryId, 'INVALID_TASK_CATEGORY_ID', 'task category identifier'),
   });
 
   const response: ApiSuccessResponse<typeof result> = {
@@ -413,7 +402,7 @@ export async function getStudentTaskDetail(
       'An approved student profile is required to inspect RSS task details.',
     );
   }
-  const taskId = Number.parseInt(req.params.taskId ?? '', 10);
+  const taskId = parseStrictIntParam(req.params.taskId, 'INVALID_TASK_ID', 'task identifier');
   const task = await getStudentEligibleTaskDetail({
     studentId: req.authUser.student.id,
     taskId,

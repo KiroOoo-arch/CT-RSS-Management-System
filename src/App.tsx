@@ -48,35 +48,61 @@ export default function App() {
   const [notificationRefreshKey, setNotificationRefreshKey] = useState(0);
 
   const bootstrapAppState = useCallback(async () => {
-    setCheckingSession(true);
     try {
-      const [healthRes, bootstrapRes] = await Promise.all([
-        apiGet<HealthSnapshot>('/api/v1/health').catch(() => null),
-        apiGet<BootstrapStatus>('/api/v1/auth/bootstrap-status').catch(() => null),
-      ]);
-
-      if (healthRes) {
-        setDatabase(healthRes.database);
-      }
-      if (bootstrapRes) {
-        setBootstrapStatus(bootstrapRes);
-      }
-
+      setCheckingSession(true);
       try {
-        const session = await apiGet<AuthSessionResponse>('/api/v1/auth/me');
-        setCsrfToken(session.csrfToken);
-        setAuthUser(session.user);
-        setDevPreviewMode(false);
-      } catch (err) {
-        if (err instanceof ApiClientError && (err.status === 401 || err.status === 503)) {
-          setCsrfToken(null);
-          setAuthUser(null);
-        } else {
+        const [healthRes, bootstrapRes] = await Promise.all([
+          apiGet<HealthSnapshot>('/api/v1/health').catch(() => null),
+          apiGet<BootstrapStatus>('/api/v1/auth/bootstrap-status').catch(() => null),
+        ]);
+
+        if (healthRes) {
+          setDatabase(healthRes.database);
+        }
+        if (bootstrapRes) {
+          setBootstrapStatus(bootstrapRes);
+        }
+
+        // Check authentication status after health/bootstrap checks complete.
+        // /api/v1/auth/me returns 401 when unauthenticated - this is expected
+        // and handled in the catch below. The key fix: the finally block
+        // below ALWAYS executes after this inner try, ensuring
+        // setCheckingSession(false) is called even if the session check
+        // throws or the response is unexpected.
+        try {
+          const session = await apiGet<AuthSessionResponse>('/api/v1/auth/me');
+          // Request completed (even if 401). Authenticate if user present.
+          if (session && session.user) {
+            setCsrfToken(session.csrfToken);
+            setAuthUser(session.user);
+            setDevPreviewMode(false);
+          } else {
+            // Session existed but has no user, or invalid session
+            setCsrfToken(session?.csrfToken ?? null);
+            setAuthUser(null);
+            setDevPreviewMode(false);
+          }
+        } catch (err) {
+          // 401 (unauthenticated), 503 (service unavailable), or other error.
+          // Clear auth state - user is not authenticated.
           setCsrfToken(null);
           setAuthUser(null);
         }
+        // Note: no 'return' here - we want execution to continue to the
+        // inner finally block below, which will set checkingSession(false).
+      } finally {
+        // CRITICAL: This finally ALWAYS runs after the inner try block,
+        // regardless of whether the auth check above completed successfully,
+        // threw an error, or was cancelled. This is the key fix: ensuring
+        // setCheckingSession(false) is called even when execution seems
+        // to "disappear" after Promise.all completes.
+        setCheckingSession(false);
       }
-    } finally {
+    } catch (e) {
+      // Top-level catch - shouldn't normally reach here, but handle it
+      // gracefully by clearing state and ensuring the checking session ends.
+      setCsrfToken(null);
+      setAuthUser(null);
       setCheckingSession(false);
     }
   }, []);

@@ -9,21 +9,10 @@ import {
   updateStudentByCoordinator,
 } from '../services/studentService.ts';
 import type { ApiSuccessResponse } from '../types/api.ts';
+import { parseOptionalIntParam, parseStrictIntParam } from '../utils/apiValidation.ts';
 
 function extractClientIp(req: AuthenticatedRequest): string | null {
   return req.ip ?? req.socket.remoteAddress ?? null;
-}
-
-function parseOptionalIntQuery(raw: unknown): number | undefined {
-  if (typeof raw !== 'string') {
-    return undefined;
-  }
-  const trimmed = raw.trim();
-  if (!trimmed) {
-    return undefined;
-  }
-  const parsed = Number.parseInt(trimmed, 10);
-  return Number.isNaN(parsed) ? 0 : parsed;
 }
 
 export async function getCoordinatorStudents(
@@ -32,16 +21,16 @@ export async function getCoordinatorStudents(
 ): Promise<void> {
   const result = await listStudents({
     search: typeof req.query.search === 'string' ? req.query.search : undefined,
-    programId: parseOptionalIntQuery(req.query.programId),
-    yearLevelId: parseOptionalIntQuery(req.query.yearLevelId),
-    sectionId: parseOptionalIntQuery(req.query.sectionId),
-    academicYearId: parseOptionalIntQuery(req.query.academicYearId),
+    programId: parseOptionalIntParam(req.query.programId, 'INVALID_PROGRAM_ID', 'program identifier'),
+    yearLevelId: parseOptionalIntParam(req.query.yearLevelId, 'INVALID_YEAR_LEVEL_ID', 'year level identifier'),
+    sectionId: parseOptionalIntParam(req.query.sectionId, 'INVALID_SECTION_ID', 'section identifier'),
+    academicYearId: parseOptionalIntParam(req.query.academicYearId, 'INVALID_ACADEMIC_YEAR_ID', 'academic year identifier'),
     accountStatus:
       typeof req.query.accountStatus === 'string' ? req.query.accountStatus : undefined,
     registrationStatus:
       typeof req.query.registrationStatus === 'string' ? req.query.registrationStatus : undefined,
-    page: parseOptionalIntQuery(req.query.page),
-    pageSize: parseOptionalIntQuery(req.query.pageSize),
+    page: parseOptionalIntParam(req.query.page, 'INVALID_PAGE', 'page'),
+    pageSize: parseOptionalIntParam(req.query.pageSize, 'INVALID_PAGE_SIZE', 'page size'),
   });
 
   const response: ApiSuccessResponse<typeof result> = {
@@ -56,7 +45,7 @@ export async function getCoordinatorStudentDetail(
   req: AuthenticatedRequest,
   res: Response,
 ): Promise<void> {
-  const studentId = Number.parseInt(req.params.studentId ?? '', 10);
+  const studentId = parseStrictIntParam(req.params.studentId, 'INVALID_STUDENT_ID', 'student identifier');
   const student = await getStudentDetail(studentId);
   const response: ApiSuccessResponse<{ student: typeof student }> = {
     success: true,
@@ -117,7 +106,7 @@ export async function patchCoordinatorStudent(
   if (!req.authUser) {
     throw new AppError(401, 'UNAUTHENTICATED', 'Authentication required.');
   }
-  const studentId = Number.parseInt(req.params.studentId ?? '', 10);
+  const studentId = parseStrictIntParam(req.params.studentId, 'INVALID_STUDENT_ID', 'student identifier');
   const body = (req.body ?? {}) as Record<string, unknown>;
   const student = await updateStudentByCoordinator({
     studentId,
@@ -150,7 +139,7 @@ export async function postCoordinatorStudentSectionAssignment(
   if (!req.authUser) {
     throw new AppError(401, 'UNAUTHENTICATED', 'Authentication required.');
   }
-  const studentId = Number.parseInt(req.params.studentId ?? '', 10);
+  const studentId = parseStrictIntParam(req.params.studentId, 'INVALID_STUDENT_ID', 'student identifier');
   const body = (req.body ?? {}) as Record<string, unknown>;
   const student = await assignOrTransferStudentSection({
     studentId,
